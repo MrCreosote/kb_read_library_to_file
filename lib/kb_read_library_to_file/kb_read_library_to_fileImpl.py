@@ -28,7 +28,7 @@ input and produces a FASTQ file along with file metadata.
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "5b01b3084e22bf3990f6d3279135abe7fb051acd"
+    GIT_COMMIT_HASH = "bd4729af83d31b90e92f9e72c9272a49d1cc47cb"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block

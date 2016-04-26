@@ -18,8 +18,8 @@ import us.kbase.kbasecommon.StrainInfo;
  * <pre>
  * Information about each set of reads.
  * The reads file locations:
- * string fwd - the path to the forward / right reads.
- * string rev - the path to the reverse / left reads.
+ * string fwd - the path to the forward / left reads.
+ * string rev - the path to the reverse / right reads.
  * string inter - the path to the interleaved reads.
  * Only the appropriate fields will be present in the structure.
  * Other fields:

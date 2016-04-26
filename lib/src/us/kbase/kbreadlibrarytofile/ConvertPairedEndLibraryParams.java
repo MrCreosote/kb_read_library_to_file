@@ -17,8 +17,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * Input parameters for converting libraries to files.
  * string workspace_name - the name of the workspace from which to take
  *    input.
- * mapping<paired_end_lib, out_file> read_libraries - PairedEndLibrary
- *     objects to convert and the prefix of the file in which the FASTQ
+ * mapping<paired_end_lib, file_prefix> read_libraries - PairedEndLibrary
+ *     objects to convert and the prefix of the file(s) in which the FASTQ
  *     files will be saved.
  * bool gzip - if true, gzip the files if they are not already zipped. If
  *     false or missing, unzip any zipped files.

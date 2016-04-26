@@ -444,10 +444,10 @@ a string
 
 An output file name prefix. The suffix will be determined by the
 converter:
-The first portion of the suffix will be .fastq.
-If the file is interleaved, the next portion will be .int. Otherwise
-it will be .fwd. for the forward / left reads and .rev. for the
-reverse / right reads.
+If the file is interleaved, the first portion of the suffix will be
+    .int. Otherwise it will be .fwd. for the forward / left reads and
+    .rev. for the reverse / right reads.
+The next portion of the suffix will be .fastq.
 If a file is in gzip format, the file will end with .gz.
 
 
@@ -482,8 +482,8 @@ a string
 Input parameters for converting libraries to files.
 string workspace_name - the name of the workspace from which to take
    input.
-mapping<paired_end_lib, out_file> read_libraries - PairedEndLibrary
-    objects to convert and the prefix of the file in which the FASTQ
+mapping<paired_end_lib, file_prefix> read_libraries - PairedEndLibrary
+    objects to convert and the prefix of the file(s) in which the FASTQ
     files will be saved.
 bool gzip - if true, gzip the files if they are not already zipped. If
     false or missing, unzip any zipped files.
@@ -532,8 +532,8 @@ interlaced has a value which is a kb_read_library_to_file.bool
 
 Information about each set of reads.
 The reads file locations:
-string fwd - the path to the forward / right reads.
-string rev - the path to the reverse / left reads.
+string fwd - the path to the forward / left reads.
+string rev - the path to the reverse / right reads.
 string inter - the path to the interleaved reads.
 Only the appropriate fields will be present in the structure.
 
