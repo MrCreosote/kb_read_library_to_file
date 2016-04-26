@@ -25,7 +25,8 @@ module kb_read_library_to_file {
     */
     typedef string read_lib;
     
-    /* An output file name prefix. The suffix will be determined by the
+    /* An absolute output file path prefix. The location given by the path must
+        be writable. The suffix of the file will be determined by the
         converter:
         If the file is interleaved, the first portion of the suffix will be
             .int. Otherwise it will be .fwd. for the forward / left reads,
@@ -34,12 +35,12 @@ module kb_read_library_to_file {
         The next portion of the suffix will be .fastq.
         If a file is in gzip format, the file will end with .gz.
      */
-    typedef string file_prefix;
+    typedef string file_path_prefix;
     
     /* Input parameters for converting libraries to files.
         string workspace_name - the name of the workspace from which to take
            input.
-        mapping<read_lib, file_prefix> read_libraries - read library
+        mapping<read_lib, file_path_prefix> read_libraries - read library
             objects to convert and the prefix of the file(s) in which the FASTQ
             files will be saved. The set of file_prefixes must be unique.
         bool gzip - if true, gzip the files if they are not already zipped. If
@@ -50,7 +51,7 @@ module kb_read_library_to_file {
     */
     typedef structure {
         string workspace_name;
-        mapping<read_lib, file_prefix> read_libraries;
+        mapping<read_lib, file_path_prefix> read_libraries;
         bool gzip;
         bool interlaced;
     } ConvertReadLibraryParams;
@@ -67,7 +68,7 @@ module kb_read_library_to_file {
         string ref - the workspace reference of the reads file, e.g
             workspace_id/object_id/version.
         tern single_genome - whether the reads are from a single genome or a
-        metagenome.
+            metagenome.
         tern read_orientation_outward - whether the read orientation is outward
             from the set of primers. Always false for singled ended reads.
         string sequencing_tech - the sequencing technology used to produce the
@@ -77,9 +78,9 @@ module kb_read_library_to_file {
         KBaseCommon.SourceInfo source - information about the organism source.
             null if unavailable.
         float insert_size_mean - the mean size of the genetic fragments. null
-            if unavailable.
+            if unavailable or single end read.
         float insert_size_std_dev - the standard deviation of the size of the
-            genetic fragments. null if unavailable.
+            genetic fragments. null if unavailable or single end read.
         int read_count - the number of reads in the this dataset. null if
             unavailable.
         int read_size - the total size of the reads, in bases. null if

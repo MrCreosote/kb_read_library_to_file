@@ -141,6 +141,7 @@ ConvertedReadLibrary is a reference to a hash where the following keys are defin
 	rev has a value which is a string
 	inter has a value which is a string
 	sing has a value which is a string
+	ref has a value which is a string
 	single_genome has a value which is a kb_read_library_to_file.tern
 	read_orientation_outward has a value which is a kb_read_library_to_file.tern
 	sequencing_tech has a value which is a string
@@ -197,6 +198,7 @@ ConvertedReadLibrary is a reference to a hash where the following keys are defin
 	rev has a value which is a string
 	inter has a value which is a string
 	sing has a value which is a string
+	ref has a value which is a string
 	single_genome has a value which is a kb_read_library_to_file.tern
 	read_orientation_outward has a value which is a kb_read_library_to_file.tern
 	sequencing_tech has a value which is a string
@@ -547,6 +549,8 @@ string sing - the path to the single end reads.
 Only the appropriate fields will be present in the structure.
 
 Other fields:
+string ref - the workspace reference of the reads file, e.g
+    workspace_id/object_id/version.
 tern single_genome - whether the reads are from a single genome or a
 metagenome.
 tern read_orientation_outward - whether the read orientation is outward
@@ -579,6 +583,7 @@ fwd has a value which is a string
 rev has a value which is a string
 inter has a value which is a string
 sing has a value which is a string
+ref has a value which is a string
 single_genome has a value which is a kb_read_library_to_file.tern
 read_orientation_outward has a value which is a kb_read_library_to_file.tern
 sequencing_tech has a value which is a string
@@ -601,6 +606,7 @@ fwd has a value which is a string
 rev has a value which is a string
 inter has a value which is a string
 sing has a value which is a string
+ref has a value which is a string
 single_genome has a value which is a kb_read_library_to_file.tern
 read_orientation_outward has a value which is a kb_read_library_to_file.tern
 sequencing_tech has a value which is a string

@@ -34,19 +34,26 @@ metadata.
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "b17a11c191200ea9a3be4e3def68496530978d78"
-
+    GIT_COMMIT_HASH = "5a28f8eeda1f17e1d1206ccff1fb44fe86d113d8"
+    
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
     SINGLE_END_TYPE = 'SingleEndLibrary'
     PAIRED_END_TYPE = 'PairedEndLibrary'
     # one of these should be deprecated
-    MODULE_NAMES = ['KBaseAssembly', 'KBaseFile']
+    KBASE_FILE = 'KBaseFile'
+    KBASE_ASSEMBLY = 'KBaseAssembly'
+    MODULE_NAMES = [KBASE_FILE, KBASE_ASSEMBLY]
+    TYPE_NAMES = [SINGLE_END_TYPE, PAIRED_END_TYPE]
 
     PARAM_IN_WS = 'workspace_name'
     PARAM_IN_LIB = 'read_libraries'
     PARAM_IN_GZIP = 'gzip'
     PARAM_IN_INTERLEAVED = 'interleaved'
+
+    TRUE = 'true'
+    FALSE = 'false'
+    UNKNOWN = 'unknown'
 
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
@@ -150,8 +157,7 @@ metadata.
         return str(object_info[6]) + '/' + str(object_info[0]) + \
             '/' + str(object_info[4])
 
-    def check_reads(self, params, reads):
-        data = reads['data']
+    def check_reads(self, reads):
         info = reads['info']
         obj_ref = self.make_ref(info)
         obj_name = info[1]
@@ -159,12 +165,63 @@ metadata.
         # Might need to do version checking here.
         module_name, type_name = info[2].split('-')[0].split('.')
         if (module_name not in self.MODULE_NAMES or
-                type_name != self.PAIRED_END_TYPE):
-            raise ValueError(
-                'Only the types ' +
-                self.MODULE_NAMES[0] + '.' + self.PAIRED_END_TYPE + ' and ' +
-                self.MODULE_NAMES[1] + '.' + self.PAIRED_END_TYPE +
-                ' are supported')
+                type_name not in self.TYPE_NAMES):
+            types = []
+            for mod in self.MODULE_NAMES:
+                for type_ in self.TYPE_NAMES:
+                    types.append(mod + '.' + type_)
+            raise ValueError(('Invalid type for object {} ({}). Supported ' +
+                              'types: {}').format(obj_name, obj_ref,
+                                                  ','.join(types)))
+        return (type_name == self.SINGLE_END_TYPE,
+                module_name == self.KBASE_FILE)
+
+    def copy_field(self, source, field, target):
+        if field in source:
+            target[field] = source[field]
+        else:
+            target[field] = None
+
+    def set_up_reads_return(self, single, kbasefile, reads):
+        data = reads['data']
+        info = reads['info']
+
+        ret = {}
+        ret['ref'] = self.make_ref(info)
+
+        sg = 'single_genome'
+        if kbasefile:
+            if sg not in data or data[sg]:
+                ret[sg] = self.TRUE
+            else:
+                ret[sg] = self.FALSE
+        else:
+            ret[sg] = self.UNKNOWN
+
+        roo = 'read_orientation_outward'
+        if single:
+            ret[roo] = self.FALSE
+        elif roo in data:
+            if data[roo]:
+                ret[roo] = self.TRUE
+            else:
+                ret[roo] = self.FALSE
+        else:
+            ret[roo] = self.UNKNOWN
+
+        # these fields are only possible in KBaseFile/Assy paired end, but the
+        # logic is still fine for single end, will just force a null
+        self.copy_field(data, 'insert_size_mean', ret)
+        self.copy_field(data, 'insert_size_std_dev', ret)
+        # these fields are in KBaseFile single end and paired end only
+        self.copy_field(data, 'source', ret)
+        self.copy_field(data, 'strain', ret)
+        self.copy_field(data, 'sequencing_tech', ret)
+        self.copy_field(data, 'read_count', ret)
+        self.copy_field(data, 'read_size', ret)
+        self.copy_field(data, 'gc_content', ret)
+
+        return ret
 
     def process_reads(self, reads, params, token):
         data = reads['data']
@@ -182,12 +239,10 @@ metadata.
         # 9 - int size
         # 10 - usermeta meta
 
-        ret = {}
-        obj_ref = self.make_ref(info)
-        ret['in_lib_ref'] = obj_ref
+        single, kbasefile = self.check_reads(reads)
+        ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
 
-        self.check_reads(params, reads)
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
         fwd_type = None
         rev_type = None
@@ -205,11 +260,11 @@ metadata.
             reverse_reads = False
 
         ret['fwd_file'] = self.shock_download(
-            obj_ref, obj_name, token, forward_reads, fwd_type)
+            ret['ref'], obj_name, token, forward_reads, fwd_type)
         ret['rev_file'] = None
         if (reverse_reads):
             ret['rev_file'] = self.shock_download(
-                obj_ref, obj_name, token, reverse_reads, rev_type)
+                ret['ref'], obj_name, token, reverse_reads, rev_type)
         return ret
 
     def process_boolean(self, params, boolname):

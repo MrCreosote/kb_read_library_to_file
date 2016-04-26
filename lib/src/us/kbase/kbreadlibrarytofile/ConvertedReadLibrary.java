@@ -24,6 +24,8 @@ import us.kbase.kbasecommon.StrainInfo;
  * string sing - the path to the single end reads.
  * Only the appropriate fields will be present in the structure.
  * Other fields:
+ * string ref - the workspace reference of the reads file, e.g
+ *     workspace_id/object_id/version.
  * tern single_genome - whether the reads are from a single genome or a
  * metagenome.
  * tern read_orientation_outward - whether the read orientation is outward
@@ -54,6 +56,7 @@ import us.kbase.kbasecommon.StrainInfo;
     "rev",
     "inter",
     "sing",
+    "ref",
     "single_genome",
     "read_orientation_outward",
     "sequencing_tech",
@@ -75,6 +78,8 @@ public class ConvertedReadLibrary {
     private String inter;
     @JsonProperty("sing")
     private String sing;
+    @JsonProperty("ref")
+    private String ref;
     @JsonProperty("single_genome")
     private String singleGenome;
     @JsonProperty("read_orientation_outward")
@@ -183,6 +188,21 @@ public class ConvertedReadLibrary {
 
     public ConvertedReadLibrary withSing(String sing) {
         this.sing = sing;
+        return this;
+    }
+
+    @JsonProperty("ref")
+    public String getRef() {
+        return ref;
+    }
+
+    @JsonProperty("ref")
+    public void setRef(String ref) {
+        this.ref = ref;
+    }
+
+    public ConvertedReadLibrary withRef(String ref) {
+        this.ref = ref;
         return this;
     }
 
@@ -406,7 +426,7 @@ public class ConvertedReadLibrary {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((((("ConvertedReadLibrary"+" [fwd=")+ fwd)+", rev=")+ rev)+", inter=")+ inter)+", sing=")+ sing)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((((((((("ConvertedReadLibrary"+" [fwd=")+ fwd)+", rev=")+ rev)+", inter=")+ inter)+", sing=")+ sing)+", ref=")+ ref)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }
