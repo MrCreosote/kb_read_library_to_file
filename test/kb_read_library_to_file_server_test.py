@@ -7,18 +7,24 @@ from os import environ
 from ConfigParser import ConfigParser
 from pprint import pprint
 
-from biokbase.workspace.client import Workspace as workspaceService
-from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file
+from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
+from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file  # @IgnorePep8
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport @IgnorePep8
+from kb_read_library_to_file.kb_read_library_to_fileImpl import ShockException
+from biokbase.workspace.client import ServerError as WorkspaceError  # @UnresolvedImport @IgnorePep8
+import shutil
+import requests
+import inspect
 
 
 class kb_read_library_to_fileTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        token = environ.get('KB_AUTH_TOKEN', None)
-        cls.ctx = {'token': token, 'provenance': [{'service': 'kb_read_library_to_file',
-            'method': 'please_never_use_it_in_production', 'method_params': []}],
-            'authenticated': 1}
+        cls.token = environ.get('KB_AUTH_TOKEN', None)
+        cls.ctx = {'token': cls.token,
+                   'authenticated': 1
+                   }
         config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
         cls.cfg = {}
         config = ConfigParser()
@@ -26,32 +32,256 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         for nameval in config.items('kb_read_library_to_file'):
             cls.cfg[nameval[0]] = nameval[1]
         cls.wsURL = cls.cfg['workspace-url']
-        cls.wsClient = workspaceService(cls.wsURL, token=token)
+        cls.shockURL = cls.cfg['shock-url']
+        cls.hs = HandleService(url=cls.cfg['handle-service-url'],
+                               token=cls.token)
+        cls.wsClient = workspaceService(cls.wsURL, token=cls.token)
+        wssuffix = int(time.time() * 1000)
+        wsName = "test_gaprice_SPAdes_" + str(wssuffix)
+        cls.wsinfo = cls.wsClient.create_workspace({'workspace': wsName})
+        print('created workspace ' + cls.getWsName())
         cls.serviceImpl = kb_read_library_to_file(cls.cfg)
+        cls.staged = {}
+        cls.nodes_to_delete = []
+        cls.handles_to_delete = []
+        cls.setupTestData()
+        print('\n\n=============== Starting tests ==================')
 
     @classmethod
     def tearDownClass(cls):
-        if hasattr(cls, 'wsName'):
-            cls.wsClient.delete_workspace({'workspace': cls.wsName})
-            print('Test workspace was deleted')
 
-    def getWsClient(self):
-        return self.__class__.wsClient
+        print('\n\n=============== Cleaning up ==================')
 
-    def getWsName(self):
-        if hasattr(self.__class__, 'wsName'):
-            return self.__class__.wsName
-        suffix = int(time.time() * 1000)
-        wsName = "test_kb_read_library_to_file_" + str(suffix)
-        ret = self.getWsClient().create_workspace({'workspace': wsName})
-        self.__class__.wsName = wsName
-        return wsName
+        if hasattr(cls, 'wsinfo'):
+            cls.wsClient.delete_workspace({'workspace': cls.getWsName()})
+            print('Test workspace was deleted: ' + cls.getWsName())
+        if hasattr(cls, 'nodes_to_delete'):
+            for node in cls.nodes_to_delete:
+                cls.delete_shock_node(node)
+        if hasattr(cls, 'handles_to_delete'):
+            cls.hs.delete_handles(cls.hs.ids_to_handles(cls.handles_to_delete))
+            print('Deleted handles ' + str(cls.handles_to_delete))
+
+    @classmethod
+    def getWsName(cls):
+        return cls.wsinfo[1]
 
     def getImpl(self):
-        return self.__class__.serviceImpl
+        return self.serviceImpl
 
-    def getContext(self):
-        return self.__class__.ctx
+    @classmethod
+    def delete_shock_node(cls, node_id):
+        header = {'Authorization': 'Oauth {0}'.format(cls.token)}
+        requests.delete(cls.shockURL + '/node/' + node_id, headers=header,
+                        allow_redirects=True)
+        print('Deleted shock node ' + node_id)
 
-    def test_pass(self):
-        pass
+    # Helper script borrowed from the transform service, logger removed
+    @classmethod
+    def upload_file_to_shock(cls, file_path):
+        """
+        Use HTTP multi-part POST to save a file to a SHOCK instance.
+        """
+
+        header = dict()
+        header["Authorization"] = "Oauth {0}".format(cls.token)
+
+        if file_path is None:
+            raise Exception("No file given for upload to SHOCK!")
+
+        with open(os.path.abspath(file_path), 'rb') as dataFile:
+            files = {'upload': dataFile}
+            print('POSTing data')
+            response = requests.post(
+                cls.shockURL + '/node', headers=header, files=files,
+                stream=True, allow_redirects=True)
+            print('got response')
+
+        if not response.ok:
+            response.raise_for_status()
+
+        result = response.json()
+
+        if result['error']:
+            raise Exception(result['error'][0])
+        else:
+            return result["data"]
+
+    @classmethod
+    def upload_file_to_shock_and_get_handle(cls, test_file):
+        '''
+        Uploads the file in test_file to shock and returns the node and a
+        handle to the node.
+        '''
+        print('loading file to shock: ' + test_file)
+        node = cls.upload_file_to_shock(test_file)
+        pprint(node)
+        cls.nodes_to_delete.append(node['id'])
+
+        print('creating handle for shock id ' + node['id'])
+        handle_id = cls.hs.persist_handle({'id': node['id'],
+                                           'type': 'shock',
+                                           'url': cls.shockURL
+                                           })
+        cls.handles_to_delete.append(handle_id)
+
+        md5 = node['file']['checksum']['md5']
+        return node['id'], handle_id, md5, node['file']['size']
+
+    @classmethod
+    def upload_assembly(cls, wsobjname, object_body, fwd_reads,
+                        rev_reads=None, kbase_assy=False, single_end=False):
+        if single_end and rev_reads:
+            raise ValueError('u r supr dum')
+
+        print('\n===============staging data for object ' + wsobjname +
+              '================')
+        print('uploading forward reads file ' + fwd_reads['file'])
+        fwd_id, fwd_handle_id, fwd_md5, fwd_size = \
+            cls.upload_file_to_shock_and_get_handle(fwd_reads['file'])
+        fwd_handle = {
+                      'hid': fwd_handle_id,
+                      'file_name': fwd_reads['name'],
+                      'id': fwd_id,
+                      'url': cls.shockURL,
+                      'type': 'shock',
+                      'remote_md5': fwd_md5
+                      }
+
+        ob = dict(object_body)  # copy
+        ob['sequencing_tech'] = 'fake data'
+        if kbase_assy:
+            if single_end:
+                wstype = 'KBaseAssembly.SingleEndLibrary'
+                ob['handle'] = fwd_handle
+            else:
+                wstype = 'KBaseAssembly.PairedEndLibrary'
+                ob['handle_1'] = fwd_handle
+        else:
+            if single_end:
+                wstype = 'KBaseFile.SingleEndLibrary'
+                obkey = 'lib'
+            else:
+                wstype = 'KBaseFile.PairedEndLibrary'
+                obkey = 'lib1'
+            ob[obkey] = \
+                {'file': fwd_handle,
+                 'encoding': 'UTF8',
+                 'type': fwd_reads['type'],
+                 'size': fwd_size
+                 }
+
+        rev_id = None
+        if rev_reads:
+            print('uploading reverse reads file ' + rev_reads['file'])
+            rev_id, rev_handle_id, rev_md5, rev_size = \
+                cls.upload_file_to_shock_and_get_handle(rev_reads['file'])
+            rev_handle = {
+                          'hid': rev_handle_id,
+                          'file_name': rev_reads['name'],
+                          'id': rev_id,
+                          'url': cls.shockURL,
+                          'type': 'shock',
+                          'remote_md5': rev_md5
+                          }
+            if kbase_assy:
+                ob['handle_2'] = rev_handle
+            else:
+                ob['lib2'] = \
+                    {'file': rev_handle,
+                     'encoding': 'UTF8',
+                     'type': rev_reads['type'],
+                     'size': rev_size
+                     }
+
+        print('Saving object data')
+        objdata = cls.wsClient.save_objects({
+            'workspace': cls.getWsName(),
+            'objects': [
+                        {
+                         'type': wstype,
+                         'data': ob,
+                         'name': wsobjname
+                         }]
+            })[0]
+        print('Saved object: ')
+        pprint(objdata)
+        pprint(ob)
+        cls.staged[wsobjname] = {'info': objdata,
+                                 'ref': cls.make_ref(objdata),
+                                 'fwd_node_id': fwd_id,
+                                 'rev_node_id': rev_id
+                                 }
+
+    @classmethod
+    def upload_empty_data(cls):
+        cls.wsClient.save_objects({
+            'workspace': cls.getWsName(),
+            'objects': [{'type': 'Empty.AType',
+                         'data': {},
+                         'name': 'empty'
+                         }]
+            })
+
+    @classmethod
+    def setupTestData(cls):
+        print('Shock url ' + cls.shockURL)
+        print('WS url ' + cls.wsClient.url)
+        print('Handle service url ' + cls.hs.url)
+        print('staging data')
+        # get file type from type
+        fwd_reads = {'file': 'data/small.forward.fq',
+                     'name': 'test_fwd.fastq',
+                     'type': 'fastq'}
+        # get file type from handle file name
+        rev_reads = {'file': 'data/small.reverse.fq',
+                     'name': 'test_rev.FQ',
+                     'type': ''}
+        # get file type from shock node file name
+        int_reads = {'file': 'data/interleaved.fq',
+                     'name': '',
+                     'type': ''}
+        cls.upload_assembly('frbasic', {}, fwd_reads, rev_reads=rev_reads)
+        cls.upload_assembly('intbasic', {'single_genome': 1}, int_reads)
+        cls.upload_assembly('meta', {'single_genome': 0}, int_reads)
+        cls.upload_assembly('reads_out', {'read_orientation_outward': 1},
+                            int_reads)
+        cls.upload_assembly('frbasic_kbassy', {}, fwd_reads,
+                            rev_reads=rev_reads, kbase_assy=True)
+        cls.upload_assembly('intbasic_kbassy', {}, int_reads, kbase_assy=True)
+        cls.upload_assembly('single_end', {}, fwd_reads, single_end=True)
+        shutil.copy2('data/small.forward.fq', 'data/small.forward.bad')
+        bad_fn_reads = {'file': 'data/small.forward.bad',
+                        'name': '',
+                        'type': ''}
+        cls.upload_assembly('bad_shk_name', {}, bad_fn_reads)
+        bad_fn_reads['file'] = 'data/small.forward.fq'
+        bad_fn_reads['name'] = 'file.terrible'
+        cls.upload_assembly('bad_file_name', {}, bad_fn_reads)
+        bad_fn_reads['name'] = 'small.forward.fastq'
+        bad_fn_reads['type'] = 'xls'
+        cls.upload_assembly('bad_file_type', {}, bad_fn_reads)
+        cls.upload_assembly('bad_node', {}, fwd_reads)
+        cls.delete_shock_node(cls.nodes_to_delete.pop())
+        cls.upload_empty_data()
+        print('Data staged.')
+
+    @classmethod
+    def make_ref(self, object_info):
+        return str(object_info[6]) + '/' + str(object_info[0]) + \
+            '/' + str(object_info[4])
+
+    def test_basic(self):
+        self.run_success({'frbasic': 'frbasic_out'})
+
+    def run_success(self, readnames):
+        test_name = inspect.stack()[1][3]
+        print('\n==== starting expected success test: ' + test_name + ' =====')
+        print('   libs: ' + str(readnames))
+
+        params = {'workspace_name': self.getWsName(),
+                  'read_libraries': readnames
+                  }
+
+        ret = self.getImpl().convert_read_library_to_file(self.ctx, params)[0]
+        pprint(ret)

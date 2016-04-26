@@ -7,7 +7,7 @@ import requests
 import time
 from pprint import pformat
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
-from biokbase.workspace.client import ServerException as WorkspaceException  # @UnresolvedImport @IgnorePep8
+from biokbase.workspace.client import ServerError as WorkspaceException  # @UnresolvedImport @IgnorePep8
 import errno
 
 
@@ -199,8 +199,8 @@ metadata.
                     else:
                         r.write(line)
 
-    # this assumes that the FASTQ files are properly formatted, which they
-    # should be if they're in kbase. Credit:
+    # this assumes that the FASTQ files are properly formatted and matched,
+    # which they should be if they're in kbase. Credit:
     # https://sourceforge.net/p/denovoassembler/ray-testsuite/ci/master/tree/scripts/interleave-fastq.py
     def interleave(self, fwdpath, revpath, targetpath):
         with open(targetpath, '2') as t:
@@ -280,6 +280,7 @@ metadata.
 
         # TODO zip/unzip
         # TODO interleave/uninterleave
+        # TODO move file to file_prefix
         single, kbasefile = self.check_reads(reads)
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
@@ -355,7 +356,7 @@ metadata.
                                  reads[read_name])
                 fileprefixes.add(reads[read_name])
         self.process_boolean(params, self.PARAM_IN_GZIP)
-        self.procces_boolean(params, self.PARAM_IN_INTERLEAVED)
+        self.process_boolean(params, self.PARAM_IN_INTERLEAVED)
 
     def mkdir_p(self, path):
         try:
@@ -423,7 +424,8 @@ metadata.
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
             output[read_name] = self.process_reads(
-                read, read[read_name], params[self.PARAM_IN_INTERLEAVED],
+                read, params[self.PARAM_IN_LIB][read_name],
+                params[self.PARAM_IN_INTERLEAVED],
                 params[self.PARAM_IN_GZIP], token)
         #END convert_read_library_to_file
 
