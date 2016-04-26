@@ -27,7 +27,9 @@ kb_read_library_to_file::kb_read_library_to_fileClient
 
 
 A KBase module: kb_read_library_to_file
-This sample module contains one small method - filter_contigs.
+
+Takes a KBaseFile or KBaseAssembly PairedEndLibrary workspace object ID as
+input and produces a FASTQ file along with file metadata.
 
 
 =cut
@@ -110,9 +112,9 @@ sub new
 
 
 
-=head2 filter_contigs
+=head2 convert_paired_end_library_to_file
 
-  $return = $obj->filter_contigs($params)
+  $output = $obj->convert_paired_end_library_to_file($params)
 
 =over 4
 
@@ -121,22 +123,52 @@ sub new
 =begin html
 
 <pre>
-$params is a kb_read_library_to_file.FilterContigsParams
-$return is a kb_read_library_to_file.FilterContigsResults
-FilterContigsParams is a reference to a hash where the following keys are defined:
-	workspace has a value which is a kb_read_library_to_file.workspace_name
-	contigset_id has a value which is a kb_read_library_to_file.contigset_id
-	min_length has a value which is an int
-workspace_name is a string
-contigset_id is a string
-FilterContigsResults is a reference to a hash where the following keys are defined:
-	report_name has a value which is a string
-	report_ref has a value which is a string
-	new_contigset_ref has a value which is a kb_read_library_to_file.ws_contigset_id
-	n_initial_contigs has a value which is an int
-	n_contigs_removed has a value which is an int
-	n_contigs_remaining has a value which is an int
-ws_contigset_id is a string
+$params is a kb_read_library_to_file.ConvertPairedEndLibraryParams
+$output is a kb_read_library_to_file.ConvertPairedEndLibraryOutput
+ConvertPairedEndLibraryParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
+	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
+	gzip has a value which is a kb_read_library_to_file.bool
+	interlaced has a value which is a kb_read_library_to_file.bool
+paired_end_lib is a string
+file_prefix is a string
+bool is a string
+ConvertPairedEndLibraryOutput is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	rev has a value which is a string
+	inter has a value which is a string
+	single_genome has a value which is a kb_read_library_to_file.tern
+	read_orientation_outward has a value which is a kb_read_library_to_file.tern
+	sequencing_tech has a value which is a string
+	strain has a value which is a KBaseCommon.StrainInfo
+	source has a value which is a KBaseCommon.SourceInfo
+	insert_size_mean has a value which is a float
+	insert_size_std_dev has a value which is a float
+	read_count has a value which is an int
+	read_size has a value which is an int
+	gc_content has a value which is a float
+tern is a string
+StrainInfo is a reference to a hash where the following keys are defined:
+	genetic_code has a value which is an int
+	genus has a value which is a string
+	species has a value which is a string
+	strain has a value which is a string
+	organelle has a value which is a string
+	source has a value which is a KBaseCommon.SourceInfo
+	ncbi_taxid has a value which is an int
+	location has a value which is a KBaseCommon.Location
+SourceInfo is a reference to a hash where the following keys are defined:
+	source has a value which is a string
+	source_id has a value which is a KBaseCommon.source_id
+	project_id has a value which is a KBaseCommon.project_id
+source_id is a string
+project_id is a string
+Location is a reference to a hash where the following keys are defined:
+	lat has a value which is a float
+	lon has a value which is a float
+	elevation has a value which is a float
+	date has a value which is a string
+	description has a value which is a string
 
 </pre>
 
@@ -144,35 +176,65 @@ ws_contigset_id is a string
 
 =begin text
 
-$params is a kb_read_library_to_file.FilterContigsParams
-$return is a kb_read_library_to_file.FilterContigsResults
-FilterContigsParams is a reference to a hash where the following keys are defined:
-	workspace has a value which is a kb_read_library_to_file.workspace_name
-	contigset_id has a value which is a kb_read_library_to_file.contigset_id
-	min_length has a value which is an int
-workspace_name is a string
-contigset_id is a string
-FilterContigsResults is a reference to a hash where the following keys are defined:
-	report_name has a value which is a string
-	report_ref has a value which is a string
-	new_contigset_ref has a value which is a kb_read_library_to_file.ws_contigset_id
-	n_initial_contigs has a value which is an int
-	n_contigs_removed has a value which is an int
-	n_contigs_remaining has a value which is an int
-ws_contigset_id is a string
+$params is a kb_read_library_to_file.ConvertPairedEndLibraryParams
+$output is a kb_read_library_to_file.ConvertPairedEndLibraryOutput
+ConvertPairedEndLibraryParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
+	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
+	gzip has a value which is a kb_read_library_to_file.bool
+	interlaced has a value which is a kb_read_library_to_file.bool
+paired_end_lib is a string
+file_prefix is a string
+bool is a string
+ConvertPairedEndLibraryOutput is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	rev has a value which is a string
+	inter has a value which is a string
+	single_genome has a value which is a kb_read_library_to_file.tern
+	read_orientation_outward has a value which is a kb_read_library_to_file.tern
+	sequencing_tech has a value which is a string
+	strain has a value which is a KBaseCommon.StrainInfo
+	source has a value which is a KBaseCommon.SourceInfo
+	insert_size_mean has a value which is a float
+	insert_size_std_dev has a value which is a float
+	read_count has a value which is an int
+	read_size has a value which is an int
+	gc_content has a value which is a float
+tern is a string
+StrainInfo is a reference to a hash where the following keys are defined:
+	genetic_code has a value which is an int
+	genus has a value which is a string
+	species has a value which is a string
+	strain has a value which is a string
+	organelle has a value which is a string
+	source has a value which is a KBaseCommon.SourceInfo
+	ncbi_taxid has a value which is an int
+	location has a value which is a KBaseCommon.Location
+SourceInfo is a reference to a hash where the following keys are defined:
+	source has a value which is a string
+	source_id has a value which is a KBaseCommon.source_id
+	project_id has a value which is a KBaseCommon.project_id
+source_id is a string
+project_id is a string
+Location is a reference to a hash where the following keys are defined:
+	lat has a value which is a float
+	lon has a value which is a float
+	elevation has a value which is a float
+	date has a value which is a string
+	description has a value which is a string
 
 
 =end text
 
 =item Description
 
-Filter contigs in a ContigSet by DNA length
+Convert PairedEndLibraries to files
 
 =back
 
 =cut
 
- sub filter_contigs
+ sub convert_paired_end_library_to_file
 {
     my($self, @args) = @_;
 
@@ -181,7 +243,7 @@ Filter contigs in a ContigSet by DNA length
     if ((my $n = @args) != 1)
     {
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function filter_contigs (received $n, expecting 1)");
+							       "Invalid argument count for function convert_paired_end_library_to_file (received $n, expecting 1)");
     }
     {
 	my($params) = @args;
@@ -189,30 +251,30 @@ Filter contigs in a ContigSet by DNA length
 	my @_bad_arguments;
         (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
         if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to filter_contigs:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    my $msg = "Invalid arguments passed to convert_paired_end_library_to_file:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'filter_contigs');
+								   method_name => 'convert_paired_end_library_to_file');
 	}
     }
 
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
-	method => "kb_read_library_to_file.filter_contigs",
+	method => "kb_read_library_to_file.convert_paired_end_library_to_file",
 	params => \@args,
     });
     if ($result) {
 	if ($result->is_error) {
 	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
 					       code => $result->content->{error}->{code},
-					       method_name => 'filter_contigs',
+					       method_name => 'convert_paired_end_library_to_file',
 					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
 					      );
 	} else {
 	    return wantarray ? @{$result->result} : $result->result->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method filter_contigs",
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method convert_paired_end_library_to_file",
 					    status_line => $self->{client}->status_line,
-					    method_name => 'filter_contigs',
+					    method_name => 'convert_paired_end_library_to_file',
 				       );
     }
 }
@@ -230,16 +292,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'filter_contigs',
+                method_name => 'convert_paired_end_library_to_file',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method filter_contigs",
+            error => "Error invoking method convert_paired_end_library_to_file",
             status_line => $self->{client}->status_line,
-            method_name => 'filter_contigs',
+            method_name => 'convert_paired_end_library_to_file',
         );
     }
 }
@@ -276,7 +338,7 @@ sub _validate_version {
 
 
 
-=head2 contigset_id
+=head2 bool
 
 =over 4
 
@@ -284,7 +346,8 @@ sub _validate_version {
 
 =item Description
 
-A string representing a ContigSet id.
+A boolean. Allowed values are 'false' or 'true'. Any other value is
+invalid.
 
 
 =item Definition
@@ -307,7 +370,7 @@ a string
 
 
 
-=head2 workspace_name
+=head2 tern
 
 =over 4
 
@@ -315,7 +378,8 @@ a string
 
 =item Description
 
-A string representing a workspace name.
+A ternary. Allowed values are 'false', 'true', or 'unknown'. Any other
+value is invalid.
 
 
 =item Definition
@@ -338,41 +402,7 @@ a string
 
 
 
-=head2 FilterContigsParams
-
-=over 4
-
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-workspace has a value which is a kb_read_library_to_file.workspace_name
-contigset_id has a value which is a kb_read_library_to_file.contigset_id
-min_length has a value which is an int
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-workspace has a value which is a kb_read_library_to_file.workspace_name
-contigset_id has a value which is a kb_read_library_to_file.contigset_id
-min_length has a value which is an int
-
-
-=end text
-
-=back
-
-
-
-=head2 ws_contigset_id
+=head2 paired_end_lib
 
 =over 4
 
@@ -380,8 +410,8 @@ min_length has a value which is an int
 
 =item Description
 
-The workspace ID for a ContigSet data object.
-@id ws KBaseGenomes.ContigSet
+The workspace object name of a PairedEndLibrary file, whether of the
+KBaseAssembly or KBaseFile type.
 
 
 =item Definition
@@ -404,10 +434,62 @@ a string
 
 
 
-=head2 FilterContigsResults
+=head2 file_prefix
 
 =over 4
 
+
+
+=item Description
+
+An output file name prefix. The suffix will be determined by the
+converter:
+The first portion of the suffix will be .fastq.
+If the file is interleaved, the next portion will be .int. Otherwise
+it will be .fwd. for the forward / left reads and .rev. for the
+reverse / right reads.
+If a file is in gzip format, the file will end with .gz.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 ConvertPairedEndLibraryParams
+
+=over 4
+
+
+
+=item Description
+
+Input parameters for converting libraries to files.
+string workspace_name - the name of the workspace from which to take
+   input.
+mapping<paired_end_lib, out_file> read_libraries - PairedEndLibrary
+    objects to convert and the prefix of the file in which the FASTQ
+    files will be saved.
+bool gzip - if true, gzip the files if they are not already zipped. If
+    false or missing, unzip any zipped files.
+bool interleaved - if true, provide the files in interleaved format if
+    they are not already. If false or missing, provide forward and 
+    reverse reads files.
 
 
 =item Definition
@@ -416,12 +498,10 @@ a string
 
 <pre>
 a reference to a hash where the following keys are defined:
-report_name has a value which is a string
-report_ref has a value which is a string
-new_contigset_ref has a value which is a kb_read_library_to_file.ws_contigset_id
-n_initial_contigs has a value which is an int
-n_contigs_removed has a value which is an int
-n_contigs_remaining has a value which is an int
+workspace_name has a value which is a string
+read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
+gzip has a value which is a kb_read_library_to_file.bool
+interlaced has a value which is a kb_read_library_to_file.bool
 
 </pre>
 
@@ -430,12 +510,96 @@ n_contigs_remaining has a value which is an int
 =begin text
 
 a reference to a hash where the following keys are defined:
-report_name has a value which is a string
-report_ref has a value which is a string
-new_contigset_ref has a value which is a kb_read_library_to_file.ws_contigset_id
-n_initial_contigs has a value which is an int
-n_contigs_removed has a value which is an int
-n_contigs_remaining has a value which is an int
+workspace_name has a value which is a string
+read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
+gzip has a value which is a kb_read_library_to_file.bool
+interlaced has a value which is a kb_read_library_to_file.bool
+
+
+=end text
+
+=back
+
+
+
+=head2 ConvertPairedEndLibraryOutput
+
+=over 4
+
+
+
+=item Description
+
+Information about each set of reads.
+The reads file locations:
+string fwd - the path to the forward / right reads.
+string rev - the path to the reverse / left reads.
+string inter - the path to the interleaved reads.
+Only the appropriate fields will be present in the structure.
+
+Other fields:
+tern single_genome - whether the reads are from a single genome or a
+metagenome.
+tern read_orientation_outward - whether the read orientation is outward
+    from the set of primers.
+string sequencing_tech - the sequencing technology used to produce the
+    reads. null if unknown.
+KBaseCommon.StrainInfo strain - information about the organism strain
+    that was sequenced. null if unavailable.
+KBaseCommon.SourceInfo source - information about the organism source.
+    null if unavailable.
+float insert_size_mean - the mean size of the genetic fragments. null
+    if unavailable.
+float insert_size_std_dev - the standard deviation of the size of the
+    genetic fragments. null if unavailable.
+int read_count - the number of reads in the this dataset. null if
+    unavailable.
+int read_size - the total size of the reads, in bases. null if
+    unavailable.
+float gc_content - the GC content of the reads. null if
+    unavailable.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+fwd has a value which is a string
+rev has a value which is a string
+inter has a value which is a string
+single_genome has a value which is a kb_read_library_to_file.tern
+read_orientation_outward has a value which is a kb_read_library_to_file.tern
+sequencing_tech has a value which is a string
+strain has a value which is a KBaseCommon.StrainInfo
+source has a value which is a KBaseCommon.SourceInfo
+insert_size_mean has a value which is a float
+insert_size_std_dev has a value which is a float
+read_count has a value which is an int
+read_size has a value which is an int
+gc_content has a value which is a float
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+fwd has a value which is a string
+rev has a value which is a string
+inter has a value which is a string
+single_genome has a value which is a kb_read_library_to_file.tern
+read_orientation_outward has a value which is a kb_read_library_to_file.tern
+sequencing_tech has a value which is a string
+strain has a value which is a KBaseCommon.StrainInfo
+source has a value which is a KBaseCommon.SourceInfo
+insert_size_mean has a value which is a float
+insert_size_std_dev has a value which is a float
+read_count has a value which is an int
+read_size has a value which is an int
+gc_content has a value which is a float
 
 
 =end text

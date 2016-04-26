@@ -171,10 +171,10 @@ class kb_read_library_to_file(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
  
-    def filter_contigs(self, params, json_rpc_context = None):
+    def convert_paired_end_library_to_file(self, params, json_rpc_context = None):
         if json_rpc_context and type(json_rpc_context) is not dict:
-            raise ValueError('Method filter_contigs: argument json_rpc_context is not type dict as required.')
-        resp = self._call('kb_read_library_to_file.filter_contigs',
+            raise ValueError('Method convert_paired_end_library_to_file: argument json_rpc_context is not type dict as required.')
+        resp = self._call('kb_read_library_to_file.convert_paired_end_library_to_file',
                           [params], json_rpc_context)
         return resp[0]
  

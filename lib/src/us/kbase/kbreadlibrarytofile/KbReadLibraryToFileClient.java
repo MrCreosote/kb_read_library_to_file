@@ -16,7 +16,8 @@ import us.kbase.common.service.UnauthorizedException;
  * <p>Original spec-file module name: kb_read_library_to_file</p>
  * <pre>
  * A KBase module: kb_read_library_to_file
- * This sample module contains one small method - filter_contigs.
+ * Takes a KBaseFile or KBaseAssembly PairedEndLibrary workspace object ID as
+ * input and produces a FASTQ file along with file metadata.
  * </pre>
  */
 public class KbReadLibraryToFileClient {
@@ -140,20 +141,20 @@ public class KbReadLibraryToFileClient {
     }
 
     /**
-     * <p>Original spec-file function name: filter_contigs</p>
+     * <p>Original spec-file function name: convert_paired_end_library_to_file</p>
      * <pre>
-     * Filter contigs in a ContigSet by DNA length
+     * Convert PairedEndLibraries to files
      * </pre>
-     * @param   params   instance of type {@link us.kbase.kbreadlibrarytofile.FilterContigsParams FilterContigsParams}
-     * @return   instance of type {@link us.kbase.kbreadlibrarytofile.FilterContigsResults FilterContigsResults}
+     * @param   params   instance of type {@link us.kbase.kbreadlibrarytofile.ConvertPairedEndLibraryParams ConvertPairedEndLibraryParams}
+     * @return   parameter "output" of type {@link us.kbase.kbreadlibrarytofile.ConvertPairedEndLibraryOutput ConvertPairedEndLibraryOutput}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public FilterContigsResults filterContigs(FilterContigsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public ConvertPairedEndLibraryOutput convertPairedEndLibraryToFile(ConvertPairedEndLibraryParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
-        TypeReference<List<FilterContigsResults>> retType = new TypeReference<List<FilterContigsResults>>() {};
-        List<FilterContigsResults> res = caller.jsonrpcCall("kb_read_library_to_file.filter_contigs", args, retType, true, true, jsonRpcContext);
+        TypeReference<List<ConvertPairedEndLibraryOutput>> retType = new TypeReference<List<ConvertPairedEndLibraryOutput>>() {};
+        List<ConvertPairedEndLibraryOutput> res = caller.jsonrpcCall("kb_read_library_to_file.convert_paired_end_library_to_file", args, retType, true, true, jsonRpcContext);
         return res.get(0);
     }
 }
