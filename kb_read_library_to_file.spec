@@ -96,8 +96,17 @@ module kb_read_library_to_file {
         int read_count;
         int read_size;
         float gc_content;
-    } ConvertPairedEndLibraryOutput;
+    } ConvertedPairedEndLibrary;
 
+    /* The output of the convert method.
+        mapping<paired_end_lib, ConvertedPairedEndLibrary> files - a mapping
+            of the paired end library workspace object names to information
+            about the converted data for each library.
+     */
+    typedef structure {
+        mapping<paired_end_lib, ConvertedPairedEndLibrary> files;
+    } ConvertPairedEndLibraryOutput;
+   
     /* Convert PairedEndLibraries to files */
     funcdef convert_paired_end_library_to_file(
             ConvertPairedEndLibraryParams params)

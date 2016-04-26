@@ -4,7 +4,7 @@ import sys
 import traceback
 import uuid
 from pprint import pprint, pformat
-from biokbase.workspace.client import Workspace as workspaceService
+from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 #END_HEADER
 
 
@@ -28,8 +28,8 @@ input and produces a FASTQ file along with file metadata.
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "bd4729af83d31b90e92f9e72c9272a49d1cc47cb"
-    
+    GIT_COMMIT_HASH = "e5311066ee1da51d282d29eb3ba730ce7b3e5f1c"
+
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
     workspaceURL = None
@@ -42,12 +42,18 @@ input and produces a FASTQ file along with file metadata.
         self.workspaceURL = config['workspace-url']
         #END_CONSTRUCTOR
         pass
-    
 
     def convert_paired_end_library_to_file(self, ctx, params):
         # ctx is the context object
         # return variables are: output
         #BEGIN convert_paired_end_library_to_file
+        ''' potential improvements:
+            Add continue_on_failure mode that reports errors for each failed
+                conversion rather than failing completely.
+            Parallelize - probably not worth it, this is all IO bound. Try if
+                there's nothing better to do.
+        '''
+        output = 'foo'
         #END convert_paired_end_library_to_file
 
         # At some point might do deeper type checking...

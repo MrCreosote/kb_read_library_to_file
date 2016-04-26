@@ -134,6 +134,8 @@ paired_end_lib is a string
 file_prefix is a string
 bool is a string
 ConvertPairedEndLibraryOutput is a reference to a hash where the following keys are defined:
+	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.ConvertedPairedEndLibrary
+ConvertedPairedEndLibrary is a reference to a hash where the following keys are defined:
 	fwd has a value which is a string
 	rev has a value which is a string
 	inter has a value which is a string
@@ -187,6 +189,8 @@ paired_end_lib is a string
 file_prefix is a string
 bool is a string
 ConvertPairedEndLibraryOutput is a reference to a hash where the following keys are defined:
+	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.ConvertedPairedEndLibrary
+ConvertedPairedEndLibrary is a reference to a hash where the following keys are defined:
 	fwd has a value which is a string
 	rev has a value which is a string
 	inter has a value which is a string
@@ -522,7 +526,7 @@ interlaced has a value which is a kb_read_library_to_file.bool
 
 
 
-=head2 ConvertPairedEndLibraryOutput
+=head2 ConvertedPairedEndLibrary
 
 =over 4
 
@@ -600,6 +604,44 @@ insert_size_std_dev has a value which is a float
 read_count has a value which is an int
 read_size has a value which is an int
 gc_content has a value which is a float
+
+
+=end text
+
+=back
+
+
+
+=head2 ConvertPairedEndLibraryOutput
+
+=over 4
+
+
+
+=item Description
+
+The output of the convert method.
+mapping<paired_end_lib, ConvertedPairedEndLibrary> files - a mapping
+    of the paired end library workspace object names to information
+    about the converted data for each library.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+files has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.ConvertedPairedEndLibrary
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+files has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.ConvertedPairedEndLibrary
 
 
 =end text
