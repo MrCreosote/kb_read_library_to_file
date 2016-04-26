@@ -4,8 +4,11 @@ import os
 import re
 import json
 import requests
+import time
 from pprint import pformat
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
+from biokbase.workspace.client import ServerException as WorkspaceException  # @UnresolvedImport @IgnorePep8
+import errno
 
 
 class ShockException(Exception):
@@ -72,6 +75,8 @@ metadata.
                        # '.fa.gz',
                        # '.fasta.gz'
                        ]
+
+    SHOCK_TEMP = 'shock_tmp'
 
     def log(self, message):
         print(message)
@@ -140,7 +145,7 @@ metadata.
                     source_obj_ref, source_obj_name, handle['id'], file_type,
                     handle_fn, node_fn, ' '.join(self.SUPPORTED_FILES)))
 
-        file_path = os.path.join(self.scratch, file_name)
+        file_path = os.path.join(self.shock_temp, file_name)
         with open(file_path, 'w') as fhandle:
             self.log('downloading reads file: ' + str(file_path))
             r = requests.get(node_url + '?download', stream=True,
@@ -171,7 +176,7 @@ metadata.
                 for type_ in self.TYPE_NAMES:
                     types.append(mod + '.' + type_)
             raise ValueError(('Invalid type for object {} ({}). Supported ' +
-                              'types: {}').format(obj_name, obj_ref,
+                              'types: {}').format(obj_ref, obj_name,
                                                   ','.join(types)))
         return (type_name == self.SINGLE_END_TYPE,
                 module_name == self.KBASE_FILE)
@@ -181,6 +186,37 @@ metadata.
             target[field] = source[field]
         else:
             target[field] = None
+
+    # this assumes that the FASTQ file is properly formatted, which it should
+    # be if it's in kbase. Credit:
+    # https://www.biostars.org/p/19446/#117160
+    def deinterleave(self, filepath, fwdpath, revpath):
+        with open(filepath, 'r') as s:
+            with open(fwdpath, 'w') as f, open(revpath, 'w') as r:
+                for i, line in enumerate(s):
+                    if i % 8 < 4:
+                        f.write(line)
+                    else:
+                        r.write(line)
+
+    # this assumes that the FASTQ files are properly formatted, which they
+    # should be if they're in kbase. Credit:
+    # https://sourceforge.net/p/denovoassembler/ray-testsuite/ci/master/tree/scripts/interleave-fastq.py
+    def interleave(self, fwdpath, revpath, targetpath):
+        with open(targetpath, '2') as t:
+            with open(fwdpath, 'r') as f, open(revpath, 'r') as r:
+                while True:
+                    line = f.readline()
+                    # since FASTQ cannot contain blank lines
+                    if not line or not line.strip():
+                        break
+                    t.write(line.strip())
+
+                    for _ in xrange(3):
+                        t.write(f.readline().strip())
+
+                    for _ in xrange(4):
+                        t.write(r.readline().strip())
 
     def set_up_reads_return(self, single, kbasefile, reads):
         data = reads['data']
@@ -207,7 +243,10 @@ metadata.
             else:
                 ret[roo] = self.FALSE
         else:
-            ret[roo] = self.UNKNOWN
+            if kbasefile:
+                ret[roo] = self.FALSE
+            else:
+                ret[roo] = self.UNKNOWN
 
         # these fields are only possible in KBaseFile/Assy paired end, but the
         # logic is still fine for single end, will just force a null
@@ -223,7 +262,7 @@ metadata.
 
         return ret
 
-    def process_reads(self, reads, params, token):
+    def process_reads(self, reads, file_prefix, gzip, interleave, token):
         data = reads['data']
         info = reads['info']
         # Object Info Contents
@@ -239,32 +278,47 @@ metadata.
         # 9 - int size
         # 10 - usermeta meta
 
+        # TODO zip/unzip
+        # TODO interleave/uninterleave
         single, kbasefile = self.check_reads(reads)
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
+        ref = ret['ref']
 
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
-        fwd_type = None
-        rev_type = None
-        if 'lib1' in data:
-            forward_reads = data['lib1']['file']
-            fwd_type = data['lib1']['type']
-        elif 'handle_1' in data:
-            forward_reads = data['handle_1']
-        if 'lib2' in data:
-            reverse_reads = data['lib2']['file']
-            rev_type = data['lib1']['type']
-        elif 'handle_2' in data:
-            reverse_reads = data['handle_2']
-        else:
-            reverse_reads = False
+        if kbasefile:
+            if single:
+                reads = data['lib']['file']
+                type_ = data['lib']['type']
+                ret['sing'] = self.shock_download(ref, obj_name, token,
+                                                  reads, type_)
+            else:
+                fwd_reads = data['lib1']['file']
+                fwd_type = data['lib1']['type']
+                readfile = self.shock_download(
+                    ref, obj_name, token, fwd_reads, fwd_type)
+                if 'lib2' in data:  # not interleaved
+                    ret['fwd'] = readfile
+                    rev_reads = data['lib2']['file']
+                    rev_type = data['lib2']['type']
+                    ret['rev'] = self.shock_download(
+                        ref, obj_name, token, rev_reads, rev_type)
+                else:
+                    ret['inter'] = readfile
+        else:  # KBaseAssembly
+            if single:
+                ret['sing'] = self.shock_download(ref, obj_name, token,
+                                                  data['handle'], None)
+            else:
+                readfile = self.shock_download(
+                    ref, obj_name, token, data['handle1'], None)
+                if 'handle2' in data:  # not interleaved
+                    ret['fwd'] = readfile
+                    ret['rev'] = self.shock_download(
+                        ref, obj_name, token, data['handle2'], None)
+                else:
+                    ret['inter'] = readfile
 
-        ret['fwd_file'] = self.shock_download(
-            ret['ref'], obj_name, token, forward_reads, fwd_type)
-        ret['rev_file'] = None
-        if (reverse_reads):
-            ret['rev_file'] = self.shock_download(
-                ret['ref'], obj_name, token, reverse_reads, rev_type)
         return ret
 
     def process_boolean(self, params, boolname):
@@ -303,6 +357,15 @@ metadata.
         self.process_boolean(params, self.PARAM_IN_GZIP)
         self.procces_boolean(params, self.PARAM_IN_INTERLEAVED)
 
+    def mkdir_p(self, path):
+        try:
+            os.makedirs(path)
+        except OSError as exc:  # Python >2.5
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -312,8 +375,9 @@ metadata.
         self.workspaceURL = config[self.URL_WS]
         self.shockURL = config[self.URL_SHOCK]
         self.scratch = os.path.abspath(config['scratch'])
-        if not os.path.exists(self.scratch):
-            os.makedirs(self.scratch)
+        self.mkdir_p(self.scratch)
+        self.shock_temp = os.path.join(self.scratch, self.SHOCK_TEMP)
+        self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
 
@@ -348,11 +412,19 @@ metadata.
         for read_name in params[self.PARAM_IN_LIB]:
             ws_reads_ids.append({'ref': params[self.PARAM_IN_WS] + '/' +
                                  read_name})
-        reads = ws.get_objects(ws_reads_ids)
+        try:
+            reads = ws.get_objects(ws_reads_ids)
+        except WorkspaceException, e:
+            print('Logging stacktrace from workspace exception at epoch {}:'
+                  .format(time.time()))
+            print(e.data)
+            raise
 
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
-            output[read_name] = self.process_reads(read, params, token)
+            output[read_name] = self.process_reads(
+                read, read[read_name], params[self.PARAM_IN_INTERLEAVED],
+                params[self.PARAM_IN_GZIP], token)
         #END convert_read_library_to_file
 
         # At some point might do deeper type checking...
