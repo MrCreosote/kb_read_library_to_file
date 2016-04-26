@@ -16,8 +16,8 @@ class kb_read_library_to_file:
     Module Description:
     A KBase module: kb_read_library_to_file
 
-Takes a KBaseFile or KBaseAssembly PairedEndLibrary workspace object ID as
-input and produces a FASTQ file along with file metadata.
+Takes KBaseFile/KBaseAssembly PairedEndLibrary/SingleEndLibrary reads library
+workspace object IDs as input and produces a FASTQ files along with file metadata.
     '''
 
     ######## WARNING FOR GEVENT USERS #######
@@ -28,8 +28,8 @@ input and produces a FASTQ file along with file metadata.
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "e5311066ee1da51d282d29eb3ba730ce7b3e5f1c"
-
+    GIT_COMMIT_HASH = "df7ebcd34e7091a36a4181719b90d9d85955d475"
+    
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
     workspaceURL = None
@@ -42,23 +42,24 @@ input and produces a FASTQ file along with file metadata.
         self.workspaceURL = config['workspace-url']
         #END_CONSTRUCTOR
         pass
+    
 
-    def convert_paired_end_library_to_file(self, ctx, params):
+    def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object
         # return variables are: output
-        #BEGIN convert_paired_end_library_to_file
+        #BEGIN convert_read_library_to_file
         ''' potential improvements:
             Add continue_on_failure mode that reports errors for each failed
                 conversion rather than failing completely.
             Parallelize - probably not worth it, this is all IO bound. Try if
                 there's nothing better to do.
         '''
-        output = 'foo'
-        #END convert_paired_end_library_to_file
+        output = {}
+        #END convert_read_library_to_file
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
-            raise ValueError('Method convert_paired_end_library_to_file return value ' +
+            raise ValueError('Method convert_read_library_to_file return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]

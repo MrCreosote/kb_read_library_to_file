@@ -61,9 +61,9 @@ class JSONObjectEncoder(json.JSONEncoder):
 sync_methods = {}
 async_run_methods = {}
 async_check_methods = {}
-async_run_methods['kb_read_library_to_file.convert_paired_end_library_to_file_async'] = ['kb_read_library_to_file', 'convert_paired_end_library_to_file']
-async_check_methods['kb_read_library_to_file.convert_paired_end_library_to_file_check'] = ['kb_read_library_to_file', 'convert_paired_end_library_to_file']
-sync_methods['kb_read_library_to_file.convert_paired_end_library_to_file'] = True
+async_run_methods['kb_read_library_to_file.convert_read_library_to_file_async'] = ['kb_read_library_to_file', 'convert_read_library_to_file']
+async_check_methods['kb_read_library_to_file.convert_read_library_to_file_check'] = ['kb_read_library_to_file', 'convert_read_library_to_file']
+sync_methods['kb_read_library_to_file.convert_read_library_to_file'] = True
 
 class AsyncJobServiceClient(object):
 
@@ -335,10 +335,10 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_kb_read_library_to_file.convert_paired_end_library_to_file,
-                             name='kb_read_library_to_file.convert_paired_end_library_to_file',
+        self.rpc_service.add(impl_kb_read_library_to_file.convert_read_library_to_file,
+                             name='kb_read_library_to_file.convert_read_library_to_file',
                              types=[dict])
-        self.method_authentication['kb_read_library_to_file.convert_paired_end_library_to_file'] = 'required'
+        self.method_authentication['kb_read_library_to_file.convert_read_library_to_file'] = 'required'
         self.rpc_service.add(impl_kb_read_library_to_file.status,
                              name='kb_read_library_to_file.status',
                              types=[dict])

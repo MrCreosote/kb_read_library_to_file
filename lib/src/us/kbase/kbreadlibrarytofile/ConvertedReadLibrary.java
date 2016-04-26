@@ -14,19 +14,20 @@ import us.kbase.kbasecommon.StrainInfo;
 
 
 /**
- * <p>Original spec-file type: ConvertedPairedEndLibrary</p>
+ * <p>Original spec-file type: ConvertedReadLibrary</p>
  * <pre>
  * Information about each set of reads.
  * The reads file locations:
  * string fwd - the path to the forward / left reads.
  * string rev - the path to the reverse / right reads.
  * string inter - the path to the interleaved reads.
+ * string sing - the path to the single end reads.
  * Only the appropriate fields will be present in the structure.
  * Other fields:
  * tern single_genome - whether the reads are from a single genome or a
  * metagenome.
  * tern read_orientation_outward - whether the read orientation is outward
- *     from the set of primers.
+ *     from the set of primers. Always false for singled ended reads.
  * string sequencing_tech - the sequencing technology used to produce the
  *     reads. null if unknown.
  * KBaseCommon.StrainInfo strain - information about the organism strain
@@ -52,6 +53,7 @@ import us.kbase.kbasecommon.StrainInfo;
     "fwd",
     "rev",
     "inter",
+    "sing",
     "single_genome",
     "read_orientation_outward",
     "sequencing_tech",
@@ -63,7 +65,7 @@ import us.kbase.kbasecommon.StrainInfo;
     "read_size",
     "gc_content"
 })
-public class ConvertedPairedEndLibrary {
+public class ConvertedReadLibrary {
 
     @JsonProperty("fwd")
     private String fwd;
@@ -71,6 +73,8 @@ public class ConvertedPairedEndLibrary {
     private String rev;
     @JsonProperty("inter")
     private String inter;
+    @JsonProperty("sing")
+    private String sing;
     @JsonProperty("single_genome")
     private String singleGenome;
     @JsonProperty("read_orientation_outward")
@@ -132,7 +136,7 @@ public class ConvertedPairedEndLibrary {
         this.fwd = fwd;
     }
 
-    public ConvertedPairedEndLibrary withFwd(String fwd) {
+    public ConvertedReadLibrary withFwd(String fwd) {
         this.fwd = fwd;
         return this;
     }
@@ -147,7 +151,7 @@ public class ConvertedPairedEndLibrary {
         this.rev = rev;
     }
 
-    public ConvertedPairedEndLibrary withRev(String rev) {
+    public ConvertedReadLibrary withRev(String rev) {
         this.rev = rev;
         return this;
     }
@@ -162,8 +166,23 @@ public class ConvertedPairedEndLibrary {
         this.inter = inter;
     }
 
-    public ConvertedPairedEndLibrary withInter(String inter) {
+    public ConvertedReadLibrary withInter(String inter) {
         this.inter = inter;
+        return this;
+    }
+
+    @JsonProperty("sing")
+    public String getSing() {
+        return sing;
+    }
+
+    @JsonProperty("sing")
+    public void setSing(String sing) {
+        this.sing = sing;
+    }
+
+    public ConvertedReadLibrary withSing(String sing) {
+        this.sing = sing;
         return this;
     }
 
@@ -177,7 +196,7 @@ public class ConvertedPairedEndLibrary {
         this.singleGenome = singleGenome;
     }
 
-    public ConvertedPairedEndLibrary withSingleGenome(String singleGenome) {
+    public ConvertedReadLibrary withSingleGenome(String singleGenome) {
         this.singleGenome = singleGenome;
         return this;
     }
@@ -192,7 +211,7 @@ public class ConvertedPairedEndLibrary {
         this.readOrientationOutward = readOrientationOutward;
     }
 
-    public ConvertedPairedEndLibrary withReadOrientationOutward(String readOrientationOutward) {
+    public ConvertedReadLibrary withReadOrientationOutward(String readOrientationOutward) {
         this.readOrientationOutward = readOrientationOutward;
         return this;
     }
@@ -207,7 +226,7 @@ public class ConvertedPairedEndLibrary {
         this.sequencingTech = sequencingTech;
     }
 
-    public ConvertedPairedEndLibrary withSequencingTech(String sequencingTech) {
+    public ConvertedReadLibrary withSequencingTech(String sequencingTech) {
         this.sequencingTech = sequencingTech;
         return this;
     }
@@ -258,7 +277,7 @@ public class ConvertedPairedEndLibrary {
         this.strain = strain;
     }
 
-    public ConvertedPairedEndLibrary withStrain(StrainInfo strain) {
+    public ConvertedReadLibrary withStrain(StrainInfo strain) {
         this.strain = strain;
         return this;
     }
@@ -295,7 +314,7 @@ public class ConvertedPairedEndLibrary {
         this.source = source;
     }
 
-    public ConvertedPairedEndLibrary withSource(SourceInfo source) {
+    public ConvertedReadLibrary withSource(SourceInfo source) {
         this.source = source;
         return this;
     }
@@ -310,7 +329,7 @@ public class ConvertedPairedEndLibrary {
         this.insertSizeMean = insertSizeMean;
     }
 
-    public ConvertedPairedEndLibrary withInsertSizeMean(Double insertSizeMean) {
+    public ConvertedReadLibrary withInsertSizeMean(Double insertSizeMean) {
         this.insertSizeMean = insertSizeMean;
         return this;
     }
@@ -325,7 +344,7 @@ public class ConvertedPairedEndLibrary {
         this.insertSizeStdDev = insertSizeStdDev;
     }
 
-    public ConvertedPairedEndLibrary withInsertSizeStdDev(Double insertSizeStdDev) {
+    public ConvertedReadLibrary withInsertSizeStdDev(Double insertSizeStdDev) {
         this.insertSizeStdDev = insertSizeStdDev;
         return this;
     }
@@ -340,7 +359,7 @@ public class ConvertedPairedEndLibrary {
         this.readCount = readCount;
     }
 
-    public ConvertedPairedEndLibrary withReadCount(Long readCount) {
+    public ConvertedReadLibrary withReadCount(Long readCount) {
         this.readCount = readCount;
         return this;
     }
@@ -355,7 +374,7 @@ public class ConvertedPairedEndLibrary {
         this.readSize = readSize;
     }
 
-    public ConvertedPairedEndLibrary withReadSize(Long readSize) {
+    public ConvertedReadLibrary withReadSize(Long readSize) {
         this.readSize = readSize;
         return this;
     }
@@ -370,7 +389,7 @@ public class ConvertedPairedEndLibrary {
         this.gcContent = gcContent;
     }
 
-    public ConvertedPairedEndLibrary withGcContent(Double gcContent) {
+    public ConvertedReadLibrary withGcContent(Double gcContent) {
         this.gcContent = gcContent;
         return this;
     }
@@ -387,7 +406,7 @@ public class ConvertedPairedEndLibrary {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((("ConvertedPairedEndLibrary"+" [fwd=")+ fwd)+", rev=")+ rev)+", inter=")+ inter)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((((((("ConvertedReadLibrary"+" [fwd=")+ fwd)+", rev=")+ rev)+", inter=")+ inter)+", sing=")+ sing)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

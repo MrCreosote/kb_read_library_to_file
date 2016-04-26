@@ -2,7 +2,7 @@ module-name:
     kb_read_library_to_file
 
 module-description:
-    Provides a method for converting KBaseFile and KBaseAssembly PairedEndLibrary (and in the future SingleEndLibrary) workspace objects to files.
+    Provides a method for converting KBaseFile and KBaseAssembly reads libraries workspace objects to files.
 
 service-language:
     python

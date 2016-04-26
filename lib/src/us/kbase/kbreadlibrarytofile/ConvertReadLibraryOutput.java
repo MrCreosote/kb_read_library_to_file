@@ -12,11 +12,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 /**
- * <p>Original spec-file type: ConvertPairedEndLibraryOutput</p>
+ * <p>Original spec-file type: ConvertReadLibraryOutput</p>
  * <pre>
  * The output of the convert method.
- * mapping<paired_end_lib, ConvertedPairedEndLibrary> files - a mapping
- *     of the paired end library workspace object names to information
+ * mapping<read_lib, ConvertedReadLibrary> files - a mapping
+ *     of the read library workspace object names to information
  *     about the converted data for each library.
  * </pre>
  * 
@@ -26,23 +26,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "files"
 })
-public class ConvertPairedEndLibraryOutput {
+public class ConvertReadLibraryOutput {
 
     @JsonProperty("files")
-    private Map<String, ConvertedPairedEndLibrary> files;
+    private Map<String, ConvertedReadLibrary> files;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("files")
-    public Map<String, ConvertedPairedEndLibrary> getFiles() {
+    public Map<String, ConvertedReadLibrary> getFiles() {
         return files;
     }
 
     @JsonProperty("files")
-    public void setFiles(Map<String, ConvertedPairedEndLibrary> files) {
+    public void setFiles(Map<String, ConvertedReadLibrary> files) {
         this.files = files;
     }
 
-    public ConvertPairedEndLibraryOutput withFiles(Map<String, ConvertedPairedEndLibrary> files) {
+    public ConvertReadLibraryOutput withFiles(Map<String, ConvertedReadLibrary> files) {
         this.files = files;
         return this;
     }
@@ -59,7 +59,7 @@ public class ConvertPairedEndLibraryOutput {
 
     @Override
     public java.lang.String toString() {
-        return ((((("ConvertPairedEndLibraryOutput"+" [files=")+ files)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((("ConvertReadLibraryOutput"+" [files=")+ files)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }
