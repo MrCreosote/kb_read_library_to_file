@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  *    input.
  * mapping<read_lib, file_prefix> read_libraries - read library
  *     objects to convert and the prefix of the file(s) in which the FASTQ
- *     files will be saved.
+ *     files will be saved. The set of file_prefixes must be unique.
  * bool gzip - if true, gzip the files if they are not already zipped. If
  *     false or missing, unzip any zipped files.
  * bool interleaved - if true, provide the files in interleaved format if

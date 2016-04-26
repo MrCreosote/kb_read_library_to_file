@@ -3,7 +3,8 @@
 A KBase module: kb_read_library_to_file
 
 Takes KBaseFile/KBaseAssembly PairedEndLibrary/SingleEndLibrary reads library
-workspace object IDs as input and produces a FASTQ files along with file metadata.
+workspace object IDs as input and produces a FASTQ files along with file
+metadata.
 
 */
 
@@ -40,7 +41,7 @@ module kb_read_library_to_file {
            input.
         mapping<read_lib, file_prefix> read_libraries - read library
             objects to convert and the prefix of the file(s) in which the FASTQ
-            files will be saved.
+            files will be saved. The set of file_prefixes must be unique.
         bool gzip - if true, gzip the files if they are not already zipped. If
             false or missing, unzip any zipped files.
         bool interleaved - if true, provide the files in interleaved format if
@@ -63,6 +64,8 @@ module kb_read_library_to_file {
         Only the appropriate fields will be present in the structure.
 
         Other fields:
+        string ref - the workspace reference of the reads file, e.g
+            workspace_id/object_id/version.
         tern single_genome - whether the reads are from a single genome or a
         metagenome.
         tern read_orientation_outward - whether the read orientation is outward
@@ -89,6 +92,7 @@ module kb_read_library_to_file {
         string rev;
         string inter;
         string sing;
+        string ref;
         tern single_genome;
         tern read_orientation_outward;
         string sequencing_tech;

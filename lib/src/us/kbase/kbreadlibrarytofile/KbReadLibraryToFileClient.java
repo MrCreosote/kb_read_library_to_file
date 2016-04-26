@@ -17,7 +17,8 @@ import us.kbase.common.service.UnauthorizedException;
  * <pre>
  * A KBase module: kb_read_library_to_file
  * Takes KBaseFile/KBaseAssembly PairedEndLibrary/SingleEndLibrary reads library
- * workspace object IDs as input and produces a FASTQ files along with file metadata.
+ * workspace object IDs as input and produces a FASTQ files along with file
+ * metadata.
  * </pre>
  */
 public class KbReadLibraryToFileClient {
