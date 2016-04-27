@@ -15,6 +15,7 @@ from biokbase.workspace.client import ServerError as WorkspaceError  # @Unresolv
 import shutil
 import requests
 import inspect
+import hashlib
 
 
 class kb_read_library_to_fileTest(unittest.TestCase):
@@ -267,21 +268,73 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         print('Data staged.')
 
     @classmethod
-    def make_ref(self, object_info):
+    def make_ref(cls, object_info):
         return str(object_info[6]) + '/' + str(object_info[0]) + \
             '/' + str(object_info[4])
 
-    def test_basic(self):
-        self.run_success({'frbasic': 'frbasic_out'})
+    def md5(self, filename):
+        with open(filename, 'rb') as file_:
+            hash_md5 = hashlib.md5()
+            buf = file_.read(65536)
+            while len(buf) > 0:
+                hash_md5.update(buf)
+                buf = file_.read(65536)
+            return hash_md5.hexdigest()
 
-    def run_success(self, readnames):
+    MD5_SM_F = 'e7dcea3e40d73ca0f71d11b044f30ded'
+    MD5_SM_R = '2cf41e49cd6b9fdcf1e511b083bb42b5'
+    MD5_SM_I = '6271cd02987c9d1c4bdc1733878fe9cf'
+
+    def test_basic(self):
+        self.run_success(
+            {'frbasic': {
+                'file_prefix': 'basic_out',
+                'gzip': None,
+                'interleave': None,
+                'md5': {'fwd': self.MD5_SM_F,
+                        'rev': self.MD5_SM_R
+                        },
+                'obj': {'fwd': '/kb/module/work/tmp/basic_out.fwd.fasta',
+                        'rev': '/kb/module/work/tmp/basic_out.rev.fasta',
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['frbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                }
+             }
+        )
+
+    def run_success(self, testspecs, gzip=None, interleave=None):
         test_name = inspect.stack()[1][3]
         print('\n==== starting expected success test: ' + test_name + ' =====')
-        print('   libs:\n' + pformat(readnames))
 
+        libs = {f: testspecs[f]['file_prefix'] for f in testspecs}
         params = {'workspace_name': self.getWsName(),
-                  'read_libraries': readnames
+                  'read_libraries': libs
                   }
+        if gzip != 'none':
+            params['gzip'] = gzip
+        if interleave != 'none':
+            params['interleave'] = interleave
+
+        print('Running converter with params:')
+        pprint(params)
 
         ret = self.getImpl().convert_read_library_to_file(self.ctx, params)[0]
+        print('converter returned:')
         pprint(ret)
+        retmap = ret['files']
+        for f in testspecs:
+            self.assertDictEqual(testspecs[f]['obj'], retmap[f])
+            for dirc in testspecs[f]['md5']:
+                expectedmd5 = testspecs[f]['md5'][dirc]
+                file_ = retmap[f][dirc]
+                self.assertEqual(expectedmd5, self.md5(file_))

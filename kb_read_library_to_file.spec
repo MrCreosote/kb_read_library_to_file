@@ -34,8 +34,7 @@ module kb_read_library_to_file {
     */
     typedef string read_lib;
     
-    /* An absolute output file path prefix. The location given by the path must
-        be writable. The suffix of the file will be determined by the
+    /* A file name prefix. The suffix of the file will be determined by the
         converter:
         If the file is interleaved, the first portion of the suffix will be
             .int. Otherwise it will be .fwd. for the forward / left reads,
@@ -44,14 +43,16 @@ module kb_read_library_to_file {
         The next portion of the suffix will be .fastq.
         If a file is in gzip format, the file will end with .gz.
      */
-    typedef string file_path_prefix;
+    typedef string file_prefix;
     
     /* Input parameters for converting libraries to files.
         string workspace_name - the name of the workspace from which to take
            input.
-        mapping<read_lib, file_path_prefix> read_libraries - read library
+        mapping<read_lib, file_prefix> read_libraries - read library
             objects to convert and the prefix of the file(s) in which the FASTQ
-            files will be saved. The set of file_prefixes must be unique.
+            files will be saved. The set of file_prefixes must be unique. These
+            files will be written to the scratch directory provided in the
+            configuration passed to the initializer.
         tern gzip - if true, gzip any unzipped files. If false, gunzip any
             zipped files. If null or missing, leave files as is unless
             unzipping is required for interleaving or deinterleaving, in which
@@ -62,7 +63,7 @@ module kb_read_library_to_file {
     */
     typedef structure {
         string workspace_name;
-        mapping<read_lib, file_path_prefix> read_libraries;
+        mapping<read_lib, file_prefix> read_libraries;
         tern gzip;
         tern interlaced;
     } ConvertReadLibraryParams;

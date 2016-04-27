@@ -499,6 +499,7 @@ Operational notes:
                 raise ValueError('File prefix specified twice: ' +
                                  reads[read_name])
                 fileprefixes.add(reads[read_name])
+            reads[read_name] = os.path.join(self.scratch, reads[read_name])
         self.process_ternary(params, self.PARAM_IN_GZIP)
         self.process_ternary(params, self.PARAM_IN_INTERLEAVED)
 
@@ -571,6 +572,7 @@ Operational notes:
                 read, params[self.PARAM_IN_LIB][read_name],
                 params[self.PARAM_IN_INTERLEAVED],
                 params[self.PARAM_IN_GZIP], token)
+        output = {'files': output}
         #END convert_read_library_to_file
 
         # At some point might do deeper type checking...
