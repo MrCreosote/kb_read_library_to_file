@@ -5,12 +5,12 @@ import time
 
 from os import environ
 from ConfigParser import ConfigParser
-from pprint import pprint
+from pprint import pprint, pformat
 
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file  # @IgnorePep8
 from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport @IgnorePep8
-from kb_read_library_to_file.kb_read_library_to_fileImpl import ShockException
+from kb_read_library_to_file.kb_read_library_to_fileImpl import ShockError
 from biokbase.workspace.client import ServerError as WorkspaceError  # @UnresolvedImport @IgnorePep8
 import shutil
 import requests
@@ -277,7 +277,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def run_success(self, readnames):
         test_name = inspect.stack()[1][3]
         print('\n==== starting expected success test: ' + test_name + ' =====')
-        print('   libs: ' + str(readnames))
+        print('   libs:\n' + pformat(readnames))
 
         params = {'workspace_name': self.getWsName(),
                   'read_libraries': readnames

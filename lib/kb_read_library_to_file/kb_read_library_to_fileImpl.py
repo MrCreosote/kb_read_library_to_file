@@ -9,9 +9,11 @@ from pprint import pformat
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 from biokbase.workspace.client import ServerError as WorkspaceException  # @UnresolvedImport @IgnorePep8
 import errno
+import shutil
+import gzip
 
 
-class ShockException(Exception):
+class ShockError(Exception):
     pass
 #END_HEADER
 
@@ -54,6 +56,8 @@ metadata.
     PARAM_IN_GZIP = 'gzip'
     PARAM_IN_INTERLEAVED = 'interleaved'
 
+    GZIP = '.gz'
+
     TRUE = 'true'
     FALSE = 'false'
     UNKNOWN = 'unknown'
@@ -69,8 +73,8 @@ metadata.
                        # '.bam',
                        # '.fa',
                        # '.fasta',
-                       '.fq.gz',
-                       '.fastq.gz',
+                       '.fq' + GZIP,
+                       '.fastq' + GZIP,
                        # '.bam.gz',
                        # '.fa.gz',
                        # '.fasta.gz'
@@ -88,7 +92,7 @@ metadata.
                 return True
         return False
 
-    def check_shock_response(self, response, errtxt):
+    def check_shock_response(self, response):
         if not response.ok:
             try:
                 err = json.loads(response.content)['error'][0]
@@ -97,10 +101,9 @@ metadata.
                 self.log("Couldn't parse response error content from Shock: " +
                          response.content)
                 response.raise_for_status()
-            raise ShockException(errtxt + str(err))
+            raise ShockError(str(err))
 
-    def shock_download(self, source_obj_ref, source_obj_name, token, handle,
-                       file_type):
+    def shock_download(self, token, handle, file_type=None):
         self.log('Downloading from shock via handle:')
         self.log(pformat(handle))
         file_name = handle['id']
@@ -108,10 +111,7 @@ metadata.
         headers = {'Authorization': 'OAuth ' + token}
         node_url = handle['url'] + '/node/' + handle['id']
         r = requests.get(node_url, headers=headers)
-        errtxt = ('Error downloading reads for object {} ({}) from shock ' +
-                  'node {}: ').format(source_obj_ref, source_obj_name,
-                                      handle['id'])
-        self.check_shock_response(r, errtxt)
+        self.check_shock_response(r)
 
         node_fn = r.json()['data']['file']['name']
 
@@ -134,29 +134,28 @@ metadata.
             print('using file name from node: ' + file_name)
 
         if not self.file_extension_ok(file_name):
-            raise ValueError(
-                ('Reads object {} ({}) contains a reads file stored in ' +
-                 'Shock node {} for which a valid filename could not ' +
-                 'be determined. In order of precedence:\n' +
+            raise ShockError(
+                ('A valid filename could not be determined for the reads ' +
+                 'file. In order of precedence:\n' +
                  'File type is: {}\n' +
                  'Handle file name is: {}\n' +
                  'Shock file name is: {}\n' +
                  'Acceptable extensions: {}').format(
-                    source_obj_ref, source_obj_name, handle['id'], file_type,
-                    handle_fn, node_fn, ' '.join(self.SUPPORTED_FILES)))
+                    file_type, handle_fn, node_fn,
+                    ' '.join(self.SUPPORTED_FILES)))
 
         file_path = os.path.join(self.shock_temp, file_name)
         with open(file_path, 'w') as fhandle:
             self.log('downloading reads file: ' + str(file_path))
             r = requests.get(node_url + '?download', stream=True,
                              headers=headers)
-            self.check_shock_response(r, errtxt)
+            self.check_shock_response(r)
             for chunk in r.iter_content(1024):
                 if not chunk:
                     break
                 fhandle.write(chunk)
         self.log('done')
-        return file_path
+        return file_path, file_path.lower().endswith(self.GZIP)
 
     def make_ref(self, object_info):
         return str(object_info[6]) + '/' + str(object_info[0]) + \
@@ -191,6 +190,8 @@ metadata.
     # be if it's in kbase. Credit:
     # https://www.biostars.org/p/19446/#117160
     def deinterleave(self, filepath, fwdpath, revpath):
+        print('Deinterleaving file {} to files {} and {}'.format(
+              filepath, fwdpath, revpath))
         with open(filepath, 'r') as s:
             with open(fwdpath, 'w') as f, open(revpath, 'w') as r:
                 for i, line in enumerate(s):
@@ -203,6 +204,8 @@ metadata.
     # which they should be if they're in kbase. Credit:
     # https://sourceforge.net/p/denovoassembler/ray-testsuite/ci/master/tree/scripts/interleave-fastq.py
     def interleave(self, fwdpath, revpath, targetpath):
+        print('Interleaving files {} and {} to {}'.format(
+              fwdpath, revpath, targetpath))
         with open(targetpath, '2') as t:
             with open(fwdpath, 'r') as f, open(revpath, 'r') as r:
                 while True:
@@ -262,6 +265,125 @@ metadata.
 
         return ret
 
+    # there's got to be better way to do this than these processing methods.
+    # make some input classes for starters to fix these gross method sigs
+
+    def process_interleaved(self, source_obj_ref, source_obj_name, token,
+                            handle, prefix, retobj, gzip, interleave,
+                            file_type=None):
+        try:
+            shockfile, isgz = self.shock_download(token, handle, file_type)
+        except ShockError, e:
+            e.message = ('Error downloading reads for object {} ({}) from ' +
+                         'shock node {}: {}').format(
+                            source_obj_ref, source_obj_name, handle['id'],
+                            e.message)
+            raise
+
+        if interleave:
+            retobj['int'] = self.handle_gzip(shockfile, gzip, isgz,
+                                             prefix + '.int.fasta')
+        else:
+            if isgz:
+                # we expect the job runner to clean up for us
+                shockfile = self.gunzip(shockfile)
+            fwdpath = os.path.join(self.scratch, prefix + '.fwd.fasta')
+            revpath = os.path.join(self.scratch, prefix + '.rev.fasta')
+            self.deinterleave(shockfile, fwdpath, revpath)
+            if gzip:
+                fwdpath = self.gzip(fwdpath)
+                revpath = self.gzip(revpath)
+            retobj['fwd'] = fwdpath
+            retobj['rev'] = revpath
+
+    def process_paired(self, source_obj_ref, source_obj_name, token,
+                       fwdhandle, revhandle, prefix, retobj, gzip, interleave,
+                       fwd_file_type=None, rev_file_type=None):
+        try:
+            fwdshock, fwdisgz = self.shock_download(token, fwdhandle,
+                                                    fwd_file_type)
+        except ShockError, e:
+            e.message = ('Error downloading reads for object {} ({}) from ' +
+                         'shock node {}: {}').format(
+                            source_obj_ref, source_obj_name, fwdhandle['id'],
+                            e.message)
+            raise
+        try:
+            revshock, revisgz = self.shock_download(token, revhandle,
+                                                    rev_file_type)
+        except ShockError, e:
+            e.message = ('Error downloading reads for object {} ({}) from ' +
+                         'shock node {}: {}').format(
+                            source_obj_ref, source_obj_name, fwdhandle['id'],
+                            e.message)
+            raise
+        if interleave:
+            # we expect the job runner to clean up for us
+            if fwdisgz:
+                fwdshock = self.gunzip(fwdshock)
+            if revisgz:
+                revshock = self.gunzip(revshock)
+            intpath = os.path.join(self.scratch, prefix + '.int.fasta')
+            self.interleave(fwdshock, revshock, intpath)
+            if gzip:
+                intpath = self.gzip(intpath)
+            retobj['int'] = intpath
+        else:
+            retobj['fwd'] = self.handle_gzip(fwdshock, gzip, fwdisgz,
+                                             prefix + '.fwd.fasta')
+            retobj['rev'] = self.handle_gzip(revshock, gzip, revisgz,
+                                             prefix + '.rev.fasta')
+
+    def process_single_end(self, source_obj_ref, source_obj_name, token,
+                           handle, prefix, retobj, gzip, file_type=None):
+        try:
+            shockfile, isgz = self.shock_download(token, handle, file_type)
+        except ShockError, e:
+            e.message = ('Error downloading reads for object {} ({}) from ' +
+                         'shock node {}: {}').format(
+                            source_obj_ref, source_obj_name, handle['id'],
+                            e.message)
+            raise
+
+        retobj['sing'] = self.handle_gzip(shockfile, gzip, isgz,
+                                          prefix + '.sing.fasta')
+
+    # there's almost certainly a better way to do this
+    def handle_gzip(self, oldfile, shouldzip, iszip, prefix):
+        if shouldzip:
+            prefix += self.GZIP
+            if iszip:
+                self.mv(oldfile, os.path.join(self.scratch, prefix))
+            else:
+                self.gzip(oldfile, os.path.join(self.scratch, prefix))
+        else:
+            if iszip:
+                self.gunzip(oldfile, os.path.join(self.scratch, prefix))
+            else:
+                self.mv(oldfile, os.path.join(self.scratch, prefix))
+        return prefix
+
+    def mv(self, oldfile, newfile):
+        shutil.move(oldfile, newfile)
+
+    def gzip(self, oldfile, newfile=None):
+        if oldfile.lower().endswith(self.GZIP):
+            raise ValueError('File {} is already gzipped'.format(oldfile))
+        if not newfile:
+            newfile = oldfile + self.GZIP
+        with open(oldfile, 'rb') as s, gzip.open(newfile, 'wb') as t:
+            shutil.copyfileobj(s, t)
+        return newfile
+
+    def gunzip(self, oldfile, newfile=None):
+        if not oldfile.lower().endswith(self.GZIP):
+            raise ValueError('File {} is not gzipped'.format(oldfile))
+        if not newfile:
+            newfile = oldfile + self.GZIP
+        with gzip.open(oldfile, 'rb') as s, open(newfile, 'wb') as t:
+            shutil.copyfileobj(s, t)
+        return newfile
+
     def process_reads(self, reads, file_prefix, gzip, interleave, token):
         data = reads['data']
         info = reads['info']
@@ -278,9 +400,7 @@ metadata.
         # 9 - int size
         # 10 - usermeta meta
 
-        # TODO zip/unzip
-        # TODO interleave/uninterleave
-        # TODO move file to file_prefix
+        # TODO leave files as is re zip/interleave
         single, kbasefile = self.check_reads(reads)
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
@@ -291,34 +411,35 @@ metadata.
             if single:
                 reads = data['lib']['file']
                 type_ = data['lib']['type']
-                ret['sing'] = self.shock_download(ref, obj_name, token,
-                                                  reads, type_)
+                ret['sing'] = self.process_single_end(
+                    ref, obj_name, token, reads, file_prefix, ret, gzip, type_)
             else:
                 fwd_reads = data['lib1']['file']
                 fwd_type = data['lib1']['type']
-                readfile = self.shock_download(
-                    ref, obj_name, token, fwd_reads, fwd_type)
                 if 'lib2' in data:  # not interleaved
-                    ret['fwd'] = readfile
                     rev_reads = data['lib2']['file']
                     rev_type = data['lib2']['type']
-                    ret['rev'] = self.shock_download(
-                        ref, obj_name, token, rev_reads, rev_type)
+                    self.process_paired(
+                        ref, obj_name, token, fwd_reads, rev_reads,
+                        file_prefix, ret, gzip, interleave, fwd_type, rev_type)
                 else:
-                    ret['inter'] = readfile
+                    self.process_interleaved(
+                        ref, obj_name, token, fwd_reads, file_prefix, ret,
+                        gzip, interleave, fwd_type)
         else:  # KBaseAssembly
             if single:
-                ret['sing'] = self.shock_download(ref, obj_name, token,
-                                                  data['handle'], None)
+                ret['sing'] = self.process_single_end(
+                    ref, obj_name, token, data['handle'], file_prefix, ret,
+                    gzip)
             else:
-                readfile = self.shock_download(
-                    ref, obj_name, token, data['handle1'], None)
                 if 'handle2' in data:  # not interleaved
-                    ret['fwd'] = readfile
-                    ret['rev'] = self.shock_download(
-                        ref, obj_name, token, data['handle2'], None)
+                    self.process_paired(
+                        ref, obj_name, token, data['handle1'], data['handle2'],
+                        file_prefix, ret, gzip, interleave)
                 else:
-                    ret['inter'] = readfile
+                    self.process_interleaved(
+                        ref, obj_name, token, data['handle1'], file_prefix,
+                        ret, gzip, interleave)
 
         return ret
 
