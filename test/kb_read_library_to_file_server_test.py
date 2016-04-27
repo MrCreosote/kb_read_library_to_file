@@ -288,14 +288,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_basic(self):
         self.run_success(
             {'frbasic': {
-                'file_prefix': 'basic_out',
                 'gzip': None,
                 'interleave': None,
                 'md5': {'fwd': self.MD5_SM_F,
                         'rev': self.MD5_SM_R
                         },
-                'obj': {'fwd': '/kb/module/work/tmp/basic_out.fwd.fasta',
-                        'rev': '/kb/module/work/tmp/basic_out.rev.fasta',
+                'obj': {'files': {'fwd_gz': 'false',
+                                  'rev_gz': 'false'
+                                  },
                         'gc_content': None,
                         'insert_size_mean': None,
                         'insert_size_std_dev': None,
@@ -316,7 +316,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         test_name = inspect.stack()[1][3]
         print('\n==== starting expected success test: ' + test_name + ' =====')
 
-        libs = {f: testspecs[f]['file_prefix'] for f in testspecs}
+        libs = [f for f in testspecs]
         params = {'workspace_name': self.getWsName(),
                   'read_libraries': libs
                   }
@@ -333,8 +333,9 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         pprint(ret)
         retmap = ret['files']
         for f in testspecs:
-            self.assertDictEqual(testspecs[f]['obj'], retmap[f])
             for dirc in testspecs[f]['md5']:
                 expectedmd5 = testspecs[f]['md5'][dirc]
-                file_ = retmap[f][dirc]
+                file_ = retmap[f]['files'][dirc]
                 self.assertEqual(expectedmd5, self.md5(file_))
+                del retmap[f]['files'][dirc]
+            self.assertDictEqual(testspecs[f]['obj'], retmap[f])

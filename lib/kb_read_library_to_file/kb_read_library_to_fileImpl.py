@@ -11,6 +11,7 @@ from biokbase.workspace.client import ServerError as WorkspaceException  # @Unre
 import errno
 import shutil
 import gzip
+import uuid
 
 
 class ShockError(Exception):
@@ -74,8 +75,7 @@ Operational notes:
 
     TRUE = 'true'
     FALSE = 'false'
-    UNKNOWN = 'unknown'
-
+    UNKNOWN = None
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
@@ -199,10 +199,7 @@ Operational notes:
                 module_name == self.KBASE_FILE)
 
     def copy_field(self, source, field, target):
-        if field in source:
-            target[field] = source[field]
-        else:
-            target[field] = None
+        target[field] = source.get(field)
 
     # this assumes that the FASTQ file is properly formatted, which it should
     # be if it's in kbase. Credit:
@@ -283,12 +280,17 @@ Operational notes:
 
         return ret
 
+    def bool_outgoing(self, boolean):
+        return self.TRUE if boolean else self.FALSE
+
+    def get_file_prefix(self):
+        return os.path.join(self.scratch, str(uuid.uuid4()))
+
     # there's got to be better way to do this than these processing methods.
     # make some input classes for starters to fix these gross method sigs
 
     def process_interleaved(self, source_obj_ref, source_obj_name, token,
-                            handle, prefix, retobj, gzip, interleave,
-                            file_type=None):
+                            handle, gzip, interleave, file_type=None):
         try:
             shockfile, isgz = self.shock_download(token, handle, file_type)
         except ShockError, e:
@@ -298,24 +300,31 @@ Operational notes:
                             e.message)
             raise
 
+        ret = {}
         if interleave is not False:  # e.g. True or None
-            retobj['int'] = self.handle_gzip(shockfile, gzip, isgz,
-                                             prefix + '.int.fasta')
+            ret['int'], ret['int_gz'] = self.handle_gzip(
+                shockfile, gzip, isgz, self.get_file_prefix() + '.int.fastq')
         else:
             if isgz:
                 # we expect the job runner to clean up for us
                 shockfile = self.gunzip(shockfile)
-            fwdpath = os.path.join(self.scratch, prefix + '.fwd.fasta')
-            revpath = os.path.join(self.scratch, prefix + '.rev.fasta')
+            fwdpath = os.path.join(self.scratch, self.get_file_prefix() +
+                                   '.fwd.fastq')
+            revpath = os.path.join(self.scratch, self.get_file_prefix() +
+                                   '.rev.fastq')
             self.deinterleave(shockfile, fwdpath, revpath)
             if gzip:
                 fwdpath = self.gzip(fwdpath)
                 revpath = self.gzip(revpath)
-            retobj['fwd'] = fwdpath
-            retobj['rev'] = revpath
+            gzip = self.bool_outgoing(gzip)
+            ret['fwd'] = fwdpath
+            ret['fwd_gz'] = gzip
+            ret['rev'] = revpath
+            ret['rev_gz'] = gzip
+        return ret
 
     def process_paired(self, source_obj_ref, source_obj_name, token,
-                       fwdhandle, revhandle, prefix, retobj, gzip, interleave,
+                       fwdhandle, revhandle, gzip, interleave,
                        fwd_file_type=None, rev_file_type=None):
         try:
             fwdshock, fwdisgz = self.shock_download(token, fwdhandle,
@@ -335,25 +344,30 @@ Operational notes:
                             source_obj_ref, source_obj_name, fwdhandle['id'],
                             e.message)
             raise
+        ret = {}
         if interleave:
             # we expect the job runner to clean up for us
             if fwdisgz:
                 fwdshock = self.gunzip(fwdshock)
             if revisgz:
                 revshock = self.gunzip(revshock)
-            intpath = os.path.join(self.scratch, prefix + '.int.fasta')
+            intpath = os.path.join(self.scratch, self.get_file_prefix() +
+                                   '.int.fastq')
             self.interleave(fwdshock, revshock, intpath)
             if gzip:
                 intpath = self.gzip(intpath)
-            retobj['int'] = intpath
+            ret['int'] = intpath
+            ret['int_gz'] = self.bool_outgoing(gzip)
         else:
-            retobj['fwd'] = self.handle_gzip(fwdshock, gzip, fwdisgz,
-                                             prefix + '.fwd.fasta')
-            retobj['rev'] = self.handle_gzip(revshock, gzip, revisgz,
-                                             prefix + '.rev.fasta')
+            ret['fwd'], ret['fwd_gz'] = self.handle_gzip(
+                fwdshock, gzip, fwdisgz, self.get_file_prefix() + '.fwd.fastq')
+
+            ret['rev'], ret['rev_gz'] = self.handle_gzip(
+                revshock, gzip, revisgz, self.get_file_prefix() + '.rev.fastq')
+        return ret
 
     def process_single_end(self, source_obj_ref, source_obj_name, token,
-                           handle, prefix, retobj, gzip, file_type=None):
+                           handle, gzip, file_type=None):
         try:
             shockfile, isgz = self.shock_download(token, handle, file_type)
         except ShockError, e:
@@ -362,14 +376,16 @@ Operational notes:
                             source_obj_ref, source_obj_name, handle['id'],
                             e.message)
             raise
-
-        retobj['sing'] = self.handle_gzip(shockfile, gzip, isgz,
-                                          prefix + '.sing.fasta')
+        f, iszip = self.handle_gzip(shockfile, gzip, isgz,
+                                    self.get_file_prefix() + '.sing.fastq')
+        return {'sing': f, 'sing_gz': iszip}
 
     # there's almost certainly a better way to do this
     def handle_gzip(self, oldfile, shouldzip, iszip, prefix):
+        zipped = False
         if shouldzip:
             prefix += self.GZIP
+            zipped = True
             if iszip:
                 self.mv(oldfile, os.path.join(self.scratch, prefix))
             else:
@@ -377,13 +393,14 @@ Operational notes:
         elif shouldzip is None:
             if iszip:
                 prefix += self.GZIP
+                zipped = True
             self.mv(oldfile, os.path.join(self.scratch, prefix))
         else:
             if iszip:
                 self.gunzip(oldfile, os.path.join(self.scratch, prefix))
             else:
                 self.mv(oldfile, os.path.join(self.scratch, prefix))
-        return prefix
+        return prefix, self.bool_outgoing(zipped)
 
     def mv(self, oldfile, newfile):
         shutil.move(oldfile, newfile)
@@ -406,7 +423,7 @@ Operational notes:
             shutil.copyfileobj(s, t)
         return newfile
 
-    def process_reads(self, reads, file_prefix, gzip, interleave, token):
+    def process_reads(self, reads, gzip, interleave, token):
         data = reads['data']
         info = reads['info']
         # Object Info Contents
@@ -432,35 +449,34 @@ Operational notes:
             if single:
                 reads = data['lib']['file']
                 type_ = data['lib']['type']
-                ret['sing'] = self.process_single_end(
-                    ref, obj_name, token, reads, file_prefix, ret, gzip, type_)
+                ret['files'] = self.process_single_end(
+                    ref, obj_name, token, reads, gzip, type_)
             else:
                 fwd_reads = data['lib1']['file']
                 fwd_type = data['lib1']['type']
                 if 'lib2' in data:  # not interleaved
                     rev_reads = data['lib2']['file']
                     rev_type = data['lib2']['type']
-                    self.process_paired(
-                        ref, obj_name, token, fwd_reads, rev_reads,
-                        file_prefix, ret, gzip, interleave, fwd_type, rev_type)
+                    ret['files'] = self.process_paired(
+                        ref, obj_name, token, fwd_reads, rev_reads, gzip,
+                        interleave, fwd_type, rev_type)
                 else:
-                    self.process_interleaved(
-                        ref, obj_name, token, fwd_reads, file_prefix, ret,
-                        gzip, interleave, fwd_type)
+                    ret['files'] = self.process_interleaved(
+                        ref, obj_name, token, fwd_reads, gzip, interleave,
+                        fwd_type)
         else:  # KBaseAssembly
             if single:
-                ret['sing'] = self.process_single_end(
-                    ref, obj_name, token, data['handle'], file_prefix, ret,
-                    gzip)
+                ret['files'] = self.process_single_end(
+                    ref, obj_name, token, data['handle'], gzip)
             else:
                 if 'handle2' in data:  # not interleaved
-                    self.process_paired(
-                        ref, obj_name, token, data['handle1'], data['handle2'],
-                        file_prefix, ret, gzip, interleave)
+                    ret['files'] = self.process_paired(
+                        ref, obj_name, token, data['handle_1'],
+                        data['handle_2'], gzip, interleave)
                 else:
-                    self.process_interleaved(
-                        ref, obj_name, token, data['handle1'], file_prefix,
-                        ret, gzip, interleave)
+                    ret['files'] = self.process_interleaved(
+                        ref, obj_name, token, data['handle_1'], gzip,
+                        interleave)
 
         return ret
 
@@ -481,25 +497,18 @@ Operational notes:
         if self.INVALID_WS_NAME_RE.search(params[self.PARAM_IN_WS]):
             raise ValueError('Invalid workspace name ' +
                              params[self.PARAM_IN_WS])
+
         if self.PARAM_IN_LIB not in params:
             raise ValueError(self.PARAM_IN_LIB + ' parameter is required')
         reads = params[self.PARAM_IN_LIB]
-        if type(reads) != dict:
-            raise ValueError(self.PARAM_IN_LIB + ' must be a map')
+        if type(reads) != list:
+            raise ValueError(self.PARAM_IN_LIB + ' must be a list')
         if not reads:
             raise ValueError('At least one reads library must be provided')
-        fileprefixes = set()
         for read_name in reads:
             if not read_name or self.INVALID_WS_OBJ_NAME_RE.search(read_name):
                 raise ValueError('Invalid workspace object name ' + read_name)
-            if not reads[read_name]:
-                raise ValueError('No file prefix provided for read library ' +
-                                 read_name)
-            if reads[read_name] in fileprefixes:
-                raise ValueError('File prefix specified twice: ' +
-                                 reads[read_name])
-                fileprefixes.add(reads[read_name])
-            reads[read_name] = os.path.join(self.scratch, reads[read_name])
+
         self.process_ternary(params, self.PARAM_IN_GZIP)
         self.process_ternary(params, self.PARAM_IN_INTERLEAVED)
 
@@ -526,7 +535,6 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
-    
 
     def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object
@@ -570,8 +578,7 @@ Operational notes:
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
             output[read_name] = self.process_reads(
-                read, params[self.PARAM_IN_LIB][read_name],
-                params[self.PARAM_IN_INTERLEAVED],
+                read, params[self.PARAM_IN_INTERLEAVED],
                 params[self.PARAM_IN_GZIP], token)
         output = {'files': output}
         #END convert_read_library_to_file
