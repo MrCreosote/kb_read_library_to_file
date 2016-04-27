@@ -29,6 +29,20 @@ class kb_read_library_to_file:
 Takes KBaseFile/KBaseAssembly PairedEndLibrary/SingleEndLibrary reads library
 workspace object IDs as input and produces a FASTQ files along with file
 metadata.
+
+Operational notes:
+- All reads files must be in fastq format, and thus provided types or filenames
+  must have a case-insensitive .fq or .fastq suffix.
+- Reads files are optionally gzipped, and as if so have a case-insensitive .gz
+  suffix after the fastq suffix.
+- The file type and suffixes are determined from, in order of precedence:
+  - the lib?/type field in KBaseFile types
+  - the lib?/file/filename or handle?/filename field
+  - the shock filename
+- If the file types / suffixes do not match the previous rules, the converter
+  raises an error.
+- If a file has a .gz suffix, it is assumed to be gzipped.
+- Files are assumed to be in correct fastq format.
     '''
 
     ######## WARNING FOR GEVENT USERS #######
@@ -39,7 +53,7 @@ metadata.
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "37d516b4ed3a1f47340f7449e66093fe00eded2a"
+    GIT_COMMIT_HASH = "b322aa7bf1947921283dfa5134848006424a30ed"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -104,6 +118,10 @@ metadata.
             raise ShockError(str(err))
 
     def shock_download(self, token, handle, file_type=None):
+        # Could keep a record of files downloaded to prevent duplicate
+        # downloads if 2 ws objects point to the same shock node, but that
+        # seems rare enough that it's not worth the extra code complexity and
+        # maintenance burden
         self.log('Downloading from shock via handle:')
         self.log(pformat(handle))
         file_name = handle['id']
