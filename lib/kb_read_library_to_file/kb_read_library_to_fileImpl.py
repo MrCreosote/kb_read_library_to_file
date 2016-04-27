@@ -32,17 +32,19 @@ workspace object IDs as input and produces a FASTQ files along with file
 metadata.
 
 Operational notes:
-- All reads files must be in fastq format, and thus provided types or filenames
-  must have a case-insensitive .fq or .fastq suffix.
-- Reads files are optionally gzipped, and as if so have a case-insensitive .gz
-  suffix after the fastq suffix.
-- The file type and suffixes are determined from, in order of precedence:
+- The file type and suffixes for the reads files are determined from, in order
+    of precedence:
   - the lib?/type field in KBaseFile types
   - the lib?/file/filename or handle?/filename field
   - the shock filename
+- All reads files must be in fastq format, and thus the file suffix must have a
+  case-insensitive .fq or .fastq suffix.
+- Reads files are optionally gzipped, and if so must have a case-insensitive
+  .gz suffix after the fastq suffix.
 - If the file types / suffixes do not match the previous rules, the converter
   raises an error.
-- If a file has a .gz suffix, it is assumed to be gzipped.
+- If a file downloaded from Shock has a .gz suffix, it is assumed to be
+  gzipped.
 - Files are assumed to be in correct fastq format.
     '''
 
@@ -54,7 +56,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "139559d7eb130ce78bf7dc14c03407494afe6e27"
+    GIT_COMMIT_HASH = "065ca0e1c28c9c56218817491a2720a0f60a2365"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -535,6 +537,7 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
+    
 
     def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object

@@ -20,17 +20,19 @@ import us.kbase.common.service.UnauthorizedException;
  * workspace object IDs as input and produces a FASTQ files along with file
  * metadata.
  * Operational notes:
- * - All reads files must be in fastq format, and thus provided types or filenames
- *   must have a case-insensitive .fq or .fastq suffix.
- * - Reads files are optionally gzipped, and as if so have a case-insensitive .gz
- *   suffix after the fastq suffix.
- * - The file type and suffixes are determined from, in order of precedence:
+ * - The file type and suffixes for the reads files are determined from, in order
+ *     of precedence:
  *   - the lib?/type field in KBaseFile types
  *   - the lib?/file/filename or handle?/filename field
  *   - the shock filename
+ * - All reads files must be in fastq format, and thus the file suffix must have a
+ *   case-insensitive .fq or .fastq suffix.
+ * - Reads files are optionally gzipped, and if so must have a case-insensitive
+ *   .gz suffix after the fastq suffix.
  * - If the file types / suffixes do not match the previous rules, the converter
  *   raises an error.
- * - If a file has a .gz suffix, it is assumed to be gzipped.
+ * - If a file downloaded from Shock has a .gz suffix, it is assumed to be
+ *   gzipped.
  * - Files are assumed to be in correct fastq format.
  * </pre>
  */

@@ -316,9 +316,8 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         test_name = inspect.stack()[1][3]
         print('\n==== starting expected success test: ' + test_name + ' =====')
 
-        libs = [f for f in testspecs]
         params = {'workspace_name': self.getWsName(),
-                  'read_libraries': libs
+                  'read_libraries': [f for f in testspecs]
                   }
         if gzip != 'none':
             params['gzip'] = gzip

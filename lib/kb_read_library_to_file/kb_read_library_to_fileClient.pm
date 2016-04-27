@@ -33,17 +33,19 @@ workspace object IDs as input and produces a FASTQ files along with file
 metadata.
 
 Operational notes:
-- All reads files must be in fastq format, and thus provided types or filenames
-  must have a case-insensitive .fq or .fastq suffix.
-- Reads files are optionally gzipped, and as if so have a case-insensitive .gz
-  suffix after the fastq suffix.
-- The file type and suffixes are determined from, in order of precedence:
+- The file type and suffixes for the reads files are determined from, in order
+    of precedence:
   - the lib?/type field in KBaseFile types
   - the lib?/file/filename or handle?/filename field
   - the shock filename
+- All reads files must be in fastq format, and thus the file suffix must have a
+  case-insensitive .fq or .fastq suffix.
+- Reads files are optionally gzipped, and if so must have a case-insensitive
+  .gz suffix after the fastq suffix.
 - If the file types / suffixes do not match the previous rules, the converter
   raises an error.
-- If a file has a .gz suffix, it is assumed to be gzipped.
+- If a file downloaded from Shock has a .gz suffix, it is assumed to be
+  gzipped.
 - Files are assumed to be in correct fastq format.
 
 
@@ -150,10 +152,7 @@ tern is a string
 ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
 	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
 ConvertedReadLibrary is a reference to a hash where the following keys are defined:
-	fwd has a value which is a string
-	rev has a value which is a string
-	inter has a value which is a string
-	sing has a value which is a string
+	files has a value which is a kb_read_library_to_file.ReadsFiles
 	ref has a value which is a string
 	single_genome has a value which is a kb_read_library_to_file.tern
 	read_orientation_outward has a value which is a kb_read_library_to_file.tern
@@ -165,6 +164,16 @@ ConvertedReadLibrary is a reference to a hash where the following keys are defin
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
+ReadsFiles is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	rev has a value which is a string
+	inter has a value which is a string
+	sing has a value which is a string
+	fwd_gz has a value which is a kb_read_library_to_file.bool
+	rev_gz has a value which is a kb_read_library_to_file.bool
+	inter_gz has a value which is a kb_read_library_to_file.bool
+	sing_gz has a value which is a kb_read_library_to_file.bool
+bool is a string
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
 	genus has a value which is a string
@@ -205,10 +214,7 @@ tern is a string
 ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
 	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
 ConvertedReadLibrary is a reference to a hash where the following keys are defined:
-	fwd has a value which is a string
-	rev has a value which is a string
-	inter has a value which is a string
-	sing has a value which is a string
+	files has a value which is a kb_read_library_to_file.ReadsFiles
 	ref has a value which is a string
 	single_genome has a value which is a kb_read_library_to_file.tern
 	read_orientation_outward has a value which is a kb_read_library_to_file.tern
@@ -220,6 +226,16 @@ ConvertedReadLibrary is a reference to a hash where the following keys are defin
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
+ReadsFiles is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	rev has a value which is a string
+	inter has a value which is a string
+	sing has a value which is a string
+	fwd_gz has a value which is a kb_read_library_to_file.bool
+	rev_gz has a value which is a kb_read_library_to_file.bool
+	inter_gz has a value which is a kb_read_library_to_file.bool
+	sing_gz has a value which is a kb_read_library_to_file.bool
+bool is a string
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
 	genus has a value which is a string
@@ -464,7 +480,8 @@ a string
 Input parameters for converting libraries to files.
 string workspace_name - the name of the workspace from which to take
    input.
-list<read_lib> read_libraries - read library objects to convert.
+list<read_lib> read_libraries - the names of the workspace read library
+    objects to convert.
 tern gzip - if true, gzip any unzipped files. If false, gunzip any
     zipped files. If null or missing, leave files as is unless
     unzipping is required for interleaving or deinterleaving, in which
@@ -571,7 +588,7 @@ sing_gz has a value which is a kb_read_library_to_file.bool
 =item Description
 
 Information about each set of reads.
-ReadsFiles files;
+ReadsFiles files - the reads files.
 string ref - the workspace reference of the reads file, e.g
     workspace_id/object_id/version.
 tern single_genome - whether the reads are from a single genome or a
@@ -586,9 +603,9 @@ KBaseCommon.StrainInfo strain - information about the organism strain
 KBaseCommon.SourceInfo source - information about the organism source.
     null if unavailable.
 float insert_size_mean - the mean size of the genetic fragments. null
-    if unavailable or single end read.
+    if unavailable or single end reads.
 float insert_size_std_dev - the standard deviation of the size of the
-    genetic fragments. null if unavailable or single end read.
+    genetic fragments. null if unavailable or single end reads.
 int read_count - the number of reads in the this dataset. null if
     unavailable.
 int read_size - the total size of the reads, in bases. null if
@@ -603,10 +620,7 @@ float gc_content - the GC content of the reads. null if
 
 <pre>
 a reference to a hash where the following keys are defined:
-fwd has a value which is a string
-rev has a value which is a string
-inter has a value which is a string
-sing has a value which is a string
+files has a value which is a kb_read_library_to_file.ReadsFiles
 ref has a value which is a string
 single_genome has a value which is a kb_read_library_to_file.tern
 read_orientation_outward has a value which is a kb_read_library_to_file.tern
@@ -626,10 +640,7 @@ gc_content has a value which is a float
 =begin text
 
 a reference to a hash where the following keys are defined:
-fwd has a value which is a string
-rev has a value which is a string
-inter has a value which is a string
-sing has a value which is a string
+files has a value which is a kb_read_library_to_file.ReadsFiles
 ref has a value which is a string
 single_genome has a value which is a kb_read_library_to_file.tern
 read_orientation_outward has a value which is a kb_read_library_to_file.tern

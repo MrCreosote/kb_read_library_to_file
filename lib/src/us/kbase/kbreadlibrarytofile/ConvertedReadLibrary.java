@@ -17,7 +17,7 @@ import us.kbase.kbasecommon.StrainInfo;
  * <p>Original spec-file type: ConvertedReadLibrary</p>
  * <pre>
  * Information about each set of reads.
- * ReadsFiles files;
+ * ReadsFiles files - the reads files.
  * string ref - the workspace reference of the reads file, e.g
  *     workspace_id/object_id/version.
  * tern single_genome - whether the reads are from a single genome or a
@@ -32,9 +32,9 @@ import us.kbase.kbasecommon.StrainInfo;
  * KBaseCommon.SourceInfo source - information about the organism source.
  *     null if unavailable.
  * float insert_size_mean - the mean size of the genetic fragments. null
- *     if unavailable or single end read.
+ *     if unavailable or single end reads.
  * float insert_size_std_dev - the standard deviation of the size of the
- *     genetic fragments. null if unavailable or single end read.
+ *     genetic fragments. null if unavailable or single end reads.
  * int read_count - the number of reads in the this dataset. null if
  *     unavailable.
  * int read_size - the total size of the reads, in bases. null if
@@ -47,10 +47,7 @@ import us.kbase.kbasecommon.StrainInfo;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
-    "fwd",
-    "rev",
-    "inter",
-    "sing",
+    "files",
     "ref",
     "single_genome",
     "read_orientation_outward",
@@ -65,14 +62,24 @@ import us.kbase.kbasecommon.StrainInfo;
 })
 public class ConvertedReadLibrary {
 
-    @JsonProperty("fwd")
-    private String fwd;
-    @JsonProperty("rev")
-    private String rev;
-    @JsonProperty("inter")
-    private String inter;
-    @JsonProperty("sing")
-    private String sing;
+    /**
+     * <p>Original spec-file type: ReadsFiles</p>
+     * <pre>
+     * Reads file locations and gzip status.
+     * Only the relevant fields will be present in the structure.
+     * string fwd - the path to the forward / left reads.
+     * string rev - the path to the reverse / right reads.
+     * string inter - the path to the interleaved reads.
+     * string sing - the path to the single end reads.
+     * bool fwd_gz - whether the forward / left reads are gzipped.
+     * bool rev_gz - whether the reverse / right reads are gzipped.
+     * bool inter_gz - whether the interleaved reads are gzipped.
+     * bool sing_gz - whether the single reads are gzipped.
+     * </pre>
+     * 
+     */
+    @JsonProperty("files")
+    private ReadsFiles files;
     @JsonProperty("ref")
     private String ref;
     @JsonProperty("single_genome")
@@ -126,63 +133,50 @@ public class ConvertedReadLibrary {
     private Double gcContent;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
-    @JsonProperty("fwd")
-    public String getFwd() {
-        return fwd;
+    /**
+     * <p>Original spec-file type: ReadsFiles</p>
+     * <pre>
+     * Reads file locations and gzip status.
+     * Only the relevant fields will be present in the structure.
+     * string fwd - the path to the forward / left reads.
+     * string rev - the path to the reverse / right reads.
+     * string inter - the path to the interleaved reads.
+     * string sing - the path to the single end reads.
+     * bool fwd_gz - whether the forward / left reads are gzipped.
+     * bool rev_gz - whether the reverse / right reads are gzipped.
+     * bool inter_gz - whether the interleaved reads are gzipped.
+     * bool sing_gz - whether the single reads are gzipped.
+     * </pre>
+     * 
+     */
+    @JsonProperty("files")
+    public ReadsFiles getFiles() {
+        return files;
     }
 
-    @JsonProperty("fwd")
-    public void setFwd(String fwd) {
-        this.fwd = fwd;
+    /**
+     * <p>Original spec-file type: ReadsFiles</p>
+     * <pre>
+     * Reads file locations and gzip status.
+     * Only the relevant fields will be present in the structure.
+     * string fwd - the path to the forward / left reads.
+     * string rev - the path to the reverse / right reads.
+     * string inter - the path to the interleaved reads.
+     * string sing - the path to the single end reads.
+     * bool fwd_gz - whether the forward / left reads are gzipped.
+     * bool rev_gz - whether the reverse / right reads are gzipped.
+     * bool inter_gz - whether the interleaved reads are gzipped.
+     * bool sing_gz - whether the single reads are gzipped.
+     * </pre>
+     * 
+     */
+    @JsonProperty("files")
+    public void setFiles(ReadsFiles files) {
+        this.files = files;
     }
 
-    public ConvertedReadLibrary withFwd(String fwd) {
-        this.fwd = fwd;
-        return this;
-    }
-
-    @JsonProperty("rev")
-    public String getRev() {
-        return rev;
-    }
-
-    @JsonProperty("rev")
-    public void setRev(String rev) {
-        this.rev = rev;
-    }
-
-    public ConvertedReadLibrary withRev(String rev) {
-        this.rev = rev;
-        return this;
-    }
-
-    @JsonProperty("inter")
-    public String getInter() {
-        return inter;
-    }
-
-    @JsonProperty("inter")
-    public void setInter(String inter) {
-        this.inter = inter;
-    }
-
-    public ConvertedReadLibrary withInter(String inter) {
-        this.inter = inter;
-        return this;
-    }
-
-    @JsonProperty("sing")
-    public String getSing() {
-        return sing;
-    }
-
-    @JsonProperty("sing")
-    public void setSing(String sing) {
-        this.sing = sing;
-    }
-
-    public ConvertedReadLibrary withSing(String sing) {
-        this.sing = sing;
+    public ConvertedReadLibrary withFiles(ReadsFiles files) {
+        this.files = files;
         return this;
     }
 
@@ -421,7 +415,7 @@ public class ConvertedReadLibrary {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((((((((((((((("ConvertedReadLibrary"+" [fwd=")+ fwd)+", rev=")+ rev)+", inter=")+ inter)+", sing=")+ sing)+", ref=")+ ref)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((((((((((("ConvertedReadLibrary"+" [files=")+ files)+", ref=")+ ref)+", singleGenome=")+ singleGenome)+", readOrientationOutward=")+ readOrientationOutward)+", sequencingTech=")+ sequencingTech)+", strain=")+ strain)+", source=")+ source)+", insertSizeMean=")+ insertSizeMean)+", insertSizeStdDev=")+ insertSizeStdDev)+", readCount=")+ readCount)+", readSize=")+ readSize)+", gcContent=")+ gcContent)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

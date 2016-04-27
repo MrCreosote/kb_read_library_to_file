@@ -18,7 +18,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * Input parameters for converting libraries to files.
  * string workspace_name - the name of the workspace from which to take
  *    input.
- * list<read_lib> read_libraries - read library objects to convert.
+ * list<read_lib> read_libraries - the names of the workspace read library
+ *     objects to convert.
  * tern gzip - if true, gzip any unzipped files. If false, gunzip any
  *     zipped files. If null or missing, leave files as is unless
  *     unzipping is required for interleaving or deinterleaving, in which
