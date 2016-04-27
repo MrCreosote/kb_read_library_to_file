@@ -226,13 +226,13 @@ Operational notes:
                     # since FASTQ cannot contain blank lines
                     if not line or not line.strip():
                         break
-                    t.write(line.strip())
+                    t.write(line.strip() + '\n')
 
                     for _ in xrange(3):
-                        t.write(f.readline().strip())
+                        t.write(f.readline().strip() + '\n')
 
                     for _ in xrange(4):
-                        t.write(r.readline().strip())
+                        t.write(r.readline().strip() + '\n')
 
     def set_up_reads_return(self, single, kbasefile, reads):
         data = reads['data']
@@ -342,6 +342,7 @@ Operational notes:
                             source_obj_ref, source_obj_name, fwdhandle['id'],
                             e.message)
             raise
+
         ret = {}
         if interleave:
             # we expect the job runner to clean up for us
@@ -563,6 +564,7 @@ Operational notes:
         token = ctx['token']
 
         self.process_params(params)
+#         self.log(pformat(params))
 
         # Get the reads library
         ws = workspaceService(self.workspaceURL, token=token)

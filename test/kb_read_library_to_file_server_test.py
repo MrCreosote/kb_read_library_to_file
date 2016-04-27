@@ -290,6 +290,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     MD5_SM_F = 'e7dcea3e40d73ca0f71d11b044f30ded'
     MD5_SM_R = '2cf41e49cd6b9fdcf1e511b083bb42b5'
     MD5_SM_I = '6271cd02987c9d1c4bdc1733878fe9cf'
+    MD5_FR_TO_I = '1c58d7d59c656db39cedcb431376514b'
 
     def test_basic(self):
         self.run_success(
@@ -404,6 +405,29 @@ class kb_read_library_to_fileTest(unittest.TestCase):
              }, gzip='true'
         )
 
+    def test_fr_to_interleave(self):
+        self.run_success(
+            {'frbasic': {
+                'md5': {'int': self.MD5_FR_TO_I},
+                'gzp': {'int': False},
+                'obj': {'files': {'int_gz': 'false',
+                                  },
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['frbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                }
+             }, interleave='true'
+        )
+
     def run_success(self, testspecs, gzip=None, interleave=None):
         test_name = inspect.stack()[1][3]
         print('\n==== starting expected success test: ' + test_name + ' ===\n')
@@ -414,7 +438,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         if gzip != 'none':
             params['gzip'] = gzip
         if interleave != 'none':
-            params['interleave'] = interleave
+            params['interleaved'] = interleave
 
         print('Running test with params:')
         pprint(params)
