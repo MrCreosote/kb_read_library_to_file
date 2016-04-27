@@ -53,7 +53,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "b322aa7bf1947921283dfa5134848006424a30ed"
+    GIT_COMMIT_HASH = "139559d7eb130ce78bf7dc14c03407494afe6e27"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -526,6 +526,7 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
+    
 
     def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object

@@ -17,13 +17,7 @@ import us.kbase.kbasecommon.StrainInfo;
  * <p>Original spec-file type: ConvertedReadLibrary</p>
  * <pre>
  * Information about each set of reads.
- * The reads file locations:
- * string fwd - the path to the forward / left reads.
- * string rev - the path to the reverse / right reads.
- * string inter - the path to the interleaved reads.
- * string sing - the path to the single end reads.
- * Only the appropriate fields will be present in the structure.
- * Other fields:
+ * ReadsFiles files;
  * string ref - the workspace reference of the reads file, e.g
  *     workspace_id/object_id/version.
  * tern single_genome - whether the reads are from a single genome or a

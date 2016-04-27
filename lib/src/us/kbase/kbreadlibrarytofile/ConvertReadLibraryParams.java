@@ -2,6 +2,7 @@
 package us.kbase.kbreadlibrarytofile;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Generated;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -17,9 +18,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * Input parameters for converting libraries to files.
  * string workspace_name - the name of the workspace from which to take
  *    input.
- * mapping<read_lib, file_path_prefix> read_libraries - read library
- *     objects to convert and the prefix of the file(s) in which the FASTQ
- *     files will be saved. The set of file_prefixes must be unique.
+ * list<read_lib> read_libraries - read library objects to convert.
  * tern gzip - if true, gzip any unzipped files. If false, gunzip any
  *     zipped files. If null or missing, leave files as is unless
  *     unzipping is required for interleaving or deinterleaving, in which
@@ -43,7 +42,7 @@ public class ConvertReadLibraryParams {
     @JsonProperty("workspace_name")
     private java.lang.String workspaceName;
     @JsonProperty("read_libraries")
-    private Map<String, String> readLibraries;
+    private List<String> readLibraries;
     @JsonProperty("gzip")
     private java.lang.String gzip;
     @JsonProperty("interlaced")
@@ -66,16 +65,16 @@ public class ConvertReadLibraryParams {
     }
 
     @JsonProperty("read_libraries")
-    public Map<String, String> getReadLibraries() {
+    public List<String> getReadLibraries() {
         return readLibraries;
     }
 
     @JsonProperty("read_libraries")
-    public void setReadLibraries(Map<String, String> readLibraries) {
+    public void setReadLibraries(List<String> readLibraries) {
         this.readLibraries = readLibraries;
     }
 
-    public ConvertReadLibraryParams withReadLibraries(Map<String, String> readLibraries) {
+    public ConvertReadLibraryParams withReadLibraries(List<String> readLibraries) {
         this.readLibraries = readLibraries;
         return this;
     }

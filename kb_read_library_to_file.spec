@@ -24,6 +24,10 @@ Operational notes:
 
 module kb_read_library_to_file {
 
+    /* A boolean. Allowed values are 'false' or 'true'. Any other value is
+        invalid. */
+    typedef string bool;
+
     /* A ternary. Allowed values are 'false', 'true', or null. Any other
         value is invalid.
      */
@@ -34,25 +38,10 @@ module kb_read_library_to_file {
     */
     typedef string read_lib;
     
-    /* A file name prefix. The suffix of the file will be determined by the
-        converter:
-        If the file is interleaved, the first portion of the suffix will be
-            .int. Otherwise it will be .fwd. for the forward / left reads,
-            .rev. for the reverse / right reads, or .sing. for single ended
-            reads.
-        The next portion of the suffix will be .fastq.
-        If a file is in gzip format, the file will end with .gz.
-     */
-    typedef string file_prefix;
-    
     /* Input parameters for converting libraries to files.
         string workspace_name - the name of the workspace from which to take
            input.
-        mapping<read_lib, file_prefix> read_libraries - read library
-            objects to convert and the prefix of the file(s) in which the FASTQ
-            files will be saved. The set of file_prefixes must be unique. These
-            files will be written to the scratch directory provided in the
-            configuration passed to the initializer.
+        list<read_lib> read_libraries - read library objects to convert.
         tern gzip - if true, gzip any unzipped files. If false, gunzip any
             zipped files. If null or missing, leave files as is unless
             unzipping is required for interleaving or deinterleaving, in which
@@ -63,20 +52,35 @@ module kb_read_library_to_file {
     */
     typedef structure {
         string workspace_name;
-        mapping<read_lib, file_prefix> read_libraries;
+        list<read_lib> read_libraries;
         tern gzip;
         tern interlaced;
     } ConvertReadLibraryParams;
     
-    /* Information about each set of reads.
-        The reads file locations:
+    /* Reads file locations and gzip status.
+        Only the relevant fields will be present in the structure.
         string fwd - the path to the forward / left reads.
         string rev - the path to the reverse / right reads.
         string inter - the path to the interleaved reads.
         string sing - the path to the single end reads.
-        Only the appropriate fields will be present in the structure.
-
-        Other fields:
+        bool fwd_gz - whether the forward / left reads are gzipped.
+        bool rev_gz - whether the reverse / right reads are gzipped.
+        bool inter_gz - whether the interleaved reads are gzipped.
+        bool sing_gz - whether the single reads are gzipped.
+     */
+    typedef structure {
+        string fwd;
+        string rev;
+        string inter;
+        string sing;
+        bool fwd_gz;
+        bool rev_gz;
+        bool inter_gz;
+        bool sing_gz;
+    } ReadsFiles;
+    
+    /* Information about each set of reads.
+        ReadsFiles files;
         string ref - the workspace reference of the reads file, e.g
             workspace_id/object_id/version.
         tern single_genome - whether the reads are from a single genome or a
