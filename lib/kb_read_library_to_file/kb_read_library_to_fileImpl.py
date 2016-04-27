@@ -507,9 +507,11 @@ Operational notes:
             raise ValueError(self.PARAM_IN_LIB + ' must be a list')
         if not reads:
             raise ValueError('At least one reads library must be provided')
+        reads = list(set(reads))
         for read_name in reads:
             if not read_name or self.INVALID_WS_OBJ_NAME_RE.search(read_name):
                 raise ValueError('Invalid workspace object name ' + read_name)
+        params[self.PARAM_IN_LIB] = reads
 
         self.process_ternary(params, self.PARAM_IN_GZIP)
         self.process_ternary(params, self.PARAM_IN_INTERLEAVED)
