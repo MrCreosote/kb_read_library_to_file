@@ -28,8 +28,25 @@ kb_read_library_to_file::kb_read_library_to_fileClient
 
 A KBase module: kb_read_library_to_file
 
-Takes a KBaseFile or KBaseAssembly PairedEndLibrary workspace object ID as
-input and produces a FASTQ file along with file metadata.
+Takes KBaseFile/KBaseAssembly PairedEndLibrary/SingleEndLibrary reads library
+workspace object IDs as input and produces a FASTQ files along with file
+metadata.
+
+Operational notes:
+- The file type and suffixes for the reads files are determined from, in order
+    of precedence:
+  - the lib?/type field in KBaseFile types
+  - the lib?/file/filename or handle?/filename field
+  - the shock filename
+- All reads files must be in fastq format, and thus the file suffix must have a
+  case-insensitive .fq or .fastq suffix.
+- Reads files are optionally gzipped, and if so must have a case-insensitive
+  .gz suffix after the fastq suffix.
+- If the file types / suffixes do not match the previous rules, the converter
+  raises an error.
+- If a file downloaded from Shock has a .gz suffix, it is assumed to be
+  gzipped.
+- Files are assumed to be in correct fastq format.
 
 
 =cut
@@ -112,9 +129,9 @@ sub new
 
 
 
-=head2 convert_paired_end_library_to_file
+=head2 convert_read_library_to_file
 
-  $output = $obj->convert_paired_end_library_to_file($params)
+  $output = $obj->convert_read_library_to_file($params)
 
 =over 4
 
@@ -123,20 +140,20 @@ sub new
 =begin html
 
 <pre>
-$params is a kb_read_library_to_file.ConvertPairedEndLibraryParams
-$output is a kb_read_library_to_file.ConvertPairedEndLibraryOutput
-ConvertPairedEndLibraryParams is a reference to a hash where the following keys are defined:
+$params is a kb_read_library_to_file.ConvertReadLibraryParams
+$output is a kb_read_library_to_file.ConvertReadLibraryOutput
+ConvertReadLibraryParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
-	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
-	gzip has a value which is a kb_read_library_to_file.bool
-	interlaced has a value which is a kb_read_library_to_file.bool
-paired_end_lib is a string
-file_prefix is a string
-bool is a string
-ConvertPairedEndLibraryOutput is a reference to a hash where the following keys are defined:
-	fwd has a value which is a string
-	rev has a value which is a string
-	inter has a value which is a string
+	read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
+	gzip has a value which is a kb_read_library_to_file.tern
+	interlaced has a value which is a kb_read_library_to_file.tern
+read_lib is a string
+tern is a string
+ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
+	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
+ConvertedReadLibrary is a reference to a hash where the following keys are defined:
+	files has a value which is a kb_read_library_to_file.ReadsFiles
+	ref has a value which is a string
 	single_genome has a value which is a kb_read_library_to_file.tern
 	read_orientation_outward has a value which is a kb_read_library_to_file.tern
 	sequencing_tech has a value which is a string
@@ -147,7 +164,16 @@ ConvertPairedEndLibraryOutput is a reference to a hash where the following keys 
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
-tern is a string
+ReadsFiles is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	rev has a value which is a string
+	inter has a value which is a string
+	sing has a value which is a string
+	fwd_gz has a value which is a kb_read_library_to_file.bool
+	rev_gz has a value which is a kb_read_library_to_file.bool
+	inter_gz has a value which is a kb_read_library_to_file.bool
+	sing_gz has a value which is a kb_read_library_to_file.bool
+bool is a string
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
 	genus has a value which is a string
@@ -176,20 +202,20 @@ Location is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a kb_read_library_to_file.ConvertPairedEndLibraryParams
-$output is a kb_read_library_to_file.ConvertPairedEndLibraryOutput
-ConvertPairedEndLibraryParams is a reference to a hash where the following keys are defined:
+$params is a kb_read_library_to_file.ConvertReadLibraryParams
+$output is a kb_read_library_to_file.ConvertReadLibraryOutput
+ConvertReadLibraryParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
-	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
-	gzip has a value which is a kb_read_library_to_file.bool
-	interlaced has a value which is a kb_read_library_to_file.bool
-paired_end_lib is a string
-file_prefix is a string
-bool is a string
-ConvertPairedEndLibraryOutput is a reference to a hash where the following keys are defined:
-	fwd has a value which is a string
-	rev has a value which is a string
-	inter has a value which is a string
+	read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
+	gzip has a value which is a kb_read_library_to_file.tern
+	interlaced has a value which is a kb_read_library_to_file.tern
+read_lib is a string
+tern is a string
+ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
+	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
+ConvertedReadLibrary is a reference to a hash where the following keys are defined:
+	files has a value which is a kb_read_library_to_file.ReadsFiles
+	ref has a value which is a string
 	single_genome has a value which is a kb_read_library_to_file.tern
 	read_orientation_outward has a value which is a kb_read_library_to_file.tern
 	sequencing_tech has a value which is a string
@@ -200,7 +226,16 @@ ConvertPairedEndLibraryOutput is a reference to a hash where the following keys 
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
-tern is a string
+ReadsFiles is a reference to a hash where the following keys are defined:
+	fwd has a value which is a string
+	rev has a value which is a string
+	inter has a value which is a string
+	sing has a value which is a string
+	fwd_gz has a value which is a kb_read_library_to_file.bool
+	rev_gz has a value which is a kb_read_library_to_file.bool
+	inter_gz has a value which is a kb_read_library_to_file.bool
+	sing_gz has a value which is a kb_read_library_to_file.bool
+bool is a string
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
 	genus has a value which is a string
@@ -228,13 +263,13 @@ Location is a reference to a hash where the following keys are defined:
 
 =item Description
 
-Convert PairedEndLibraries to files
+Convert read libraries to files
 
 =back
 
 =cut
 
- sub convert_paired_end_library_to_file
+ sub convert_read_library_to_file
 {
     my($self, @args) = @_;
 
@@ -243,7 +278,7 @@ Convert PairedEndLibraries to files
     if ((my $n = @args) != 1)
     {
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function convert_paired_end_library_to_file (received $n, expecting 1)");
+							       "Invalid argument count for function convert_read_library_to_file (received $n, expecting 1)");
     }
     {
 	my($params) = @args;
@@ -251,30 +286,30 @@ Convert PairedEndLibraries to files
 	my @_bad_arguments;
         (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
         if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to convert_paired_end_library_to_file:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    my $msg = "Invalid arguments passed to convert_read_library_to_file:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'convert_paired_end_library_to_file');
+								   method_name => 'convert_read_library_to_file');
 	}
     }
 
     my $result = $self->{client}->call($self->{url}, $self->{headers}, {
-	method => "kb_read_library_to_file.convert_paired_end_library_to_file",
+	method => "kb_read_library_to_file.convert_read_library_to_file",
 	params => \@args,
     });
     if ($result) {
 	if ($result->is_error) {
 	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
 					       code => $result->content->{error}->{code},
-					       method_name => 'convert_paired_end_library_to_file',
+					       method_name => 'convert_read_library_to_file',
 					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
 					      );
 	} else {
 	    return wantarray ? @{$result->result} : $result->result->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method convert_paired_end_library_to_file",
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method convert_read_library_to_file",
 					    status_line => $self->{client}->status_line,
-					    method_name => 'convert_paired_end_library_to_file',
+					    method_name => 'convert_read_library_to_file',
 				       );
     }
 }
@@ -292,16 +327,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'convert_paired_end_library_to_file',
+                method_name => 'convert_read_library_to_file',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method convert_paired_end_library_to_file",
+            error => "Error invoking method convert_read_library_to_file",
             status_line => $self->{client}->status_line,
-            method_name => 'convert_paired_end_library_to_file',
+            method_name => 'convert_read_library_to_file',
         );
     }
 }
@@ -378,7 +413,7 @@ a string
 
 =item Description
 
-A ternary. Allowed values are 'false', 'true', or 'unknown'. Any other
+A ternary. Allowed values are 'false', 'true', or null. Any other
 value is invalid.
 
 
@@ -402,7 +437,7 @@ a string
 
 
 
-=head2 paired_end_lib
+=head2 read_lib
 
 =over 4
 
@@ -410,7 +445,7 @@ a string
 
 =item Description
 
-The workspace object name of a PairedEndLibrary file, whether of the
+The workspace object name of a read library, whether of the
 KBaseAssembly or KBaseFile type.
 
 
@@ -434,44 +469,7 @@ a string
 
 
 
-=head2 file_prefix
-
-=over 4
-
-
-
-=item Description
-
-An output file name prefix. The suffix will be determined by the
-converter:
-The first portion of the suffix will be .fastq.
-If the file is interleaved, the next portion will be .int. Otherwise
-it will be .fwd. for the forward / left reads and .rev. for the
-reverse / right reads.
-If a file is in gzip format, the file will end with .gz.
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a string
-</pre>
-
-=end html
-
-=begin text
-
-a string
-
-=end text
-
-=back
-
-
-
-=head2 ConvertPairedEndLibraryParams
+=head2 ConvertReadLibraryParams
 
 =over 4
 
@@ -482,14 +480,15 @@ a string
 Input parameters for converting libraries to files.
 string workspace_name - the name of the workspace from which to take
    input.
-mapping<paired_end_lib, out_file> read_libraries - PairedEndLibrary
-    objects to convert and the prefix of the file in which the FASTQ
-    files will be saved.
-bool gzip - if true, gzip the files if they are not already zipped. If
-    false or missing, unzip any zipped files.
-bool interleaved - if true, provide the files in interleaved format if
-    they are not already. If false or missing, provide forward and 
-    reverse reads files.
+list<read_lib> read_libraries - the names of the workspace read library
+    objects to convert.
+tern gzip - if true, gzip any unzipped files. If false, gunzip any
+    zipped files. If null or missing, leave files as is unless
+    unzipping is required for interleaving or deinterleaving, in which
+    case the files will be left unzipped.
+tern interleaved - if true, provide the files in interleaved format if
+    they are not already. If false, provide forward and reverse reads
+    files. If null or missing, leave files as is.
 
 
 =item Definition
@@ -499,9 +498,9 @@ bool interleaved - if true, provide the files in interleaved format if
 <pre>
 a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
-read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
-gzip has a value which is a kb_read_library_to_file.bool
-interlaced has a value which is a kb_read_library_to_file.bool
+read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
+gzip has a value which is a kb_read_library_to_file.tern
+interlaced has a value which is a kb_read_library_to_file.tern
 
 </pre>
 
@@ -511,9 +510,9 @@ interlaced has a value which is a kb_read_library_to_file.bool
 
 a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
-read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.paired_end_lib and the value is a kb_read_library_to_file.file_prefix
-gzip has a value which is a kb_read_library_to_file.bool
-interlaced has a value which is a kb_read_library_to_file.bool
+read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
+gzip has a value which is a kb_read_library_to_file.tern
+interlaced has a value which is a kb_read_library_to_file.tern
 
 
 =end text
@@ -522,7 +521,65 @@ interlaced has a value which is a kb_read_library_to_file.bool
 
 
 
-=head2 ConvertPairedEndLibraryOutput
+=head2 ReadsFiles
+
+=over 4
+
+
+
+=item Description
+
+Reads file locations and gzip status.
+Only the relevant fields will be present in the structure.
+string fwd - the path to the forward / left reads.
+string rev - the path to the reverse / right reads.
+string inter - the path to the interleaved reads.
+string sing - the path to the single end reads.
+bool fwd_gz - whether the forward / left reads are gzipped.
+bool rev_gz - whether the reverse / right reads are gzipped.
+bool inter_gz - whether the interleaved reads are gzipped.
+bool sing_gz - whether the single reads are gzipped.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+fwd has a value which is a string
+rev has a value which is a string
+inter has a value which is a string
+sing has a value which is a string
+fwd_gz has a value which is a kb_read_library_to_file.bool
+rev_gz has a value which is a kb_read_library_to_file.bool
+inter_gz has a value which is a kb_read_library_to_file.bool
+sing_gz has a value which is a kb_read_library_to_file.bool
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+fwd has a value which is a string
+rev has a value which is a string
+inter has a value which is a string
+sing has a value which is a string
+fwd_gz has a value which is a kb_read_library_to_file.bool
+rev_gz has a value which is a kb_read_library_to_file.bool
+inter_gz has a value which is a kb_read_library_to_file.bool
+sing_gz has a value which is a kb_read_library_to_file.bool
+
+
+=end text
+
+=back
+
+
+
+=head2 ConvertedReadLibrary
 
 =over 4
 
@@ -531,17 +588,14 @@ interlaced has a value which is a kb_read_library_to_file.bool
 =item Description
 
 Information about each set of reads.
-The reads file locations:
-string fwd - the path to the forward / right reads.
-string rev - the path to the reverse / left reads.
-string inter - the path to the interleaved reads.
-Only the appropriate fields will be present in the structure.
-
-Other fields:
+ReadsFiles files - the reads files.
+string ref - the workspace reference of the reads file, e.g
+    workspace_id/object_id/version.
 tern single_genome - whether the reads are from a single genome or a
-metagenome.
+    metagenome. null if unknown.
 tern read_orientation_outward - whether the read orientation is outward
-    from the set of primers.
+    from the set of primers. Always false for singled ended reads. null
+    if unknown.
 string sequencing_tech - the sequencing technology used to produce the
     reads. null if unknown.
 KBaseCommon.StrainInfo strain - information about the organism strain
@@ -549,9 +603,9 @@ KBaseCommon.StrainInfo strain - information about the organism strain
 KBaseCommon.SourceInfo source - information about the organism source.
     null if unavailable.
 float insert_size_mean - the mean size of the genetic fragments. null
-    if unavailable.
+    if unavailable or single end reads.
 float insert_size_std_dev - the standard deviation of the size of the
-    genetic fragments. null if unavailable.
+    genetic fragments. null if unavailable or single end reads.
 int read_count - the number of reads in the this dataset. null if
     unavailable.
 int read_size - the total size of the reads, in bases. null if
@@ -566,9 +620,8 @@ float gc_content - the GC content of the reads. null if
 
 <pre>
 a reference to a hash where the following keys are defined:
-fwd has a value which is a string
-rev has a value which is a string
-inter has a value which is a string
+files has a value which is a kb_read_library_to_file.ReadsFiles
+ref has a value which is a string
 single_genome has a value which is a kb_read_library_to_file.tern
 read_orientation_outward has a value which is a kb_read_library_to_file.tern
 sequencing_tech has a value which is a string
@@ -587,9 +640,8 @@ gc_content has a value which is a float
 =begin text
 
 a reference to a hash where the following keys are defined:
-fwd has a value which is a string
-rev has a value which is a string
-inter has a value which is a string
+files has a value which is a kb_read_library_to_file.ReadsFiles
+ref has a value which is a string
 single_genome has a value which is a kb_read_library_to_file.tern
 read_orientation_outward has a value which is a kb_read_library_to_file.tern
 sequencing_tech has a value which is a string
@@ -600,6 +652,44 @@ insert_size_std_dev has a value which is a float
 read_count has a value which is an int
 read_size has a value which is an int
 gc_content has a value which is a float
+
+
+=end text
+
+=back
+
+
+
+=head2 ConvertReadLibraryOutput
+
+=over 4
+
+
+
+=item Description
+
+The output of the convert method.
+mapping<read_lib, ConvertedReadLibrary> files - a mapping
+    of the read library workspace object names to information
+    about the converted data for each library.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
 
 
 =end text

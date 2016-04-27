@@ -16,8 +16,24 @@ import us.kbase.common.service.UnauthorizedException;
  * <p>Original spec-file module name: kb_read_library_to_file</p>
  * <pre>
  * A KBase module: kb_read_library_to_file
- * Takes a KBaseFile or KBaseAssembly PairedEndLibrary workspace object ID as
- * input and produces a FASTQ file along with file metadata.
+ * Takes KBaseFile/KBaseAssembly PairedEndLibrary/SingleEndLibrary reads library
+ * workspace object IDs as input and produces a FASTQ files along with file
+ * metadata.
+ * Operational notes:
+ * - The file type and suffixes for the reads files are determined from, in order
+ *     of precedence:
+ *   - the lib?/type field in KBaseFile types
+ *   - the lib?/file/filename or handle?/filename field
+ *   - the shock filename
+ * - All reads files must be in fastq format, and thus the file suffix must have a
+ *   case-insensitive .fq or .fastq suffix.
+ * - Reads files are optionally gzipped, and if so must have a case-insensitive
+ *   .gz suffix after the fastq suffix.
+ * - If the file types / suffixes do not match the previous rules, the converter
+ *   raises an error.
+ * - If a file downloaded from Shock has a .gz suffix, it is assumed to be
+ *   gzipped.
+ * - Files are assumed to be in correct fastq format.
  * </pre>
  */
 public class KbReadLibraryToFileClient {
@@ -141,20 +157,20 @@ public class KbReadLibraryToFileClient {
     }
 
     /**
-     * <p>Original spec-file function name: convert_paired_end_library_to_file</p>
+     * <p>Original spec-file function name: convert_read_library_to_file</p>
      * <pre>
-     * Convert PairedEndLibraries to files
+     * Convert read libraries to files
      * </pre>
-     * @param   params   instance of type {@link us.kbase.kbreadlibrarytofile.ConvertPairedEndLibraryParams ConvertPairedEndLibraryParams}
-     * @return   parameter "output" of type {@link us.kbase.kbreadlibrarytofile.ConvertPairedEndLibraryOutput ConvertPairedEndLibraryOutput}
+     * @param   params   instance of type {@link us.kbase.kbreadlibrarytofile.ConvertReadLibraryParams ConvertReadLibraryParams}
+     * @return   parameter "output" of type {@link us.kbase.kbreadlibrarytofile.ConvertReadLibraryOutput ConvertReadLibraryOutput}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public ConvertPairedEndLibraryOutput convertPairedEndLibraryToFile(ConvertPairedEndLibraryParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public ConvertReadLibraryOutput convertReadLibraryToFile(ConvertReadLibraryParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
-        TypeReference<List<ConvertPairedEndLibraryOutput>> retType = new TypeReference<List<ConvertPairedEndLibraryOutput>>() {};
-        List<ConvertPairedEndLibraryOutput> res = caller.jsonrpcCall("kb_read_library_to_file.convert_paired_end_library_to_file", args, retType, true, true, jsonRpcContext);
+        TypeReference<List<ConvertReadLibraryOutput>> retType = new TypeReference<List<ConvertReadLibraryOutput>>() {};
+        List<ConvertReadLibraryOutput> res = caller.jsonrpcCall("kb_read_library_to_file.convert_read_library_to_file", args, retType, true, true, jsonRpcContext);
         return res.get(0);
     }
 }
