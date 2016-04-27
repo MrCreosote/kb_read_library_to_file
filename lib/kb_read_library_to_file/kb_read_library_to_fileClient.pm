@@ -128,12 +128,12 @@ $params is a kb_read_library_to_file.ConvertReadLibraryParams
 $output is a kb_read_library_to_file.ConvertReadLibraryOutput
 ConvertReadLibraryParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
-	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_prefix
-	gzip has a value which is a kb_read_library_to_file.bool
-	interlaced has a value which is a kb_read_library_to_file.bool
+	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_path_prefix
+	gzip has a value which is a kb_read_library_to_file.tern
+	interlaced has a value which is a kb_read_library_to_file.tern
 read_lib is a string
-file_prefix is a string
-bool is a string
+file_path_prefix is a string
+tern is a string
 ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
 	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
 ConvertedReadLibrary is a reference to a hash where the following keys are defined:
@@ -152,7 +152,6 @@ ConvertedReadLibrary is a reference to a hash where the following keys are defin
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
-tern is a string
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
 	genus has a value which is a string
@@ -185,12 +184,12 @@ $params is a kb_read_library_to_file.ConvertReadLibraryParams
 $output is a kb_read_library_to_file.ConvertReadLibraryOutput
 ConvertReadLibraryParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
-	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_prefix
-	gzip has a value which is a kb_read_library_to_file.bool
-	interlaced has a value which is a kb_read_library_to_file.bool
+	read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_path_prefix
+	gzip has a value which is a kb_read_library_to_file.tern
+	interlaced has a value which is a kb_read_library_to_file.tern
 read_lib is a string
-file_prefix is a string
-bool is a string
+file_path_prefix is a string
+tern is a string
 ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
 	files has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.ConvertedReadLibrary
 ConvertedReadLibrary is a reference to a hash where the following keys are defined:
@@ -209,7 +208,6 @@ ConvertedReadLibrary is a reference to a hash where the following keys are defin
 	read_count has a value which is an int
 	read_size has a value which is an int
 	gc_content has a value which is a float
-tern is a string
 StrainInfo is a reference to a hash where the following keys are defined:
 	genetic_code has a value which is an int
 	genus has a value which is a string
@@ -347,38 +345,6 @@ sub _validate_version {
 
 
 
-=head2 bool
-
-=over 4
-
-
-
-=item Description
-
-A boolean. Allowed values are 'false' or 'true'. Any other value is
-invalid.
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a string
-</pre>
-
-=end html
-
-=begin text
-
-a string
-
-=end text
-
-=back
-
-
-
 =head2 tern
 
 =over 4
@@ -387,7 +353,7 @@ a string
 
 =item Description
 
-A ternary. Allowed values are 'false', 'true', or 'unknown'. Any other
+A ternary. Allowed values are 'false', 'true', or null. Any other
 value is invalid.
 
 
@@ -443,7 +409,7 @@ a string
 
 
 
-=head2 file_prefix
+=head2 file_path_prefix
 
 =over 4
 
@@ -451,7 +417,8 @@ a string
 
 =item Description
 
-An output file name prefix. The suffix will be determined by the
+An absolute output file path prefix. The location given by the path must
+be writable. The suffix of the file will be determined by the
 converter:
 If the file is interleaved, the first portion of the suffix will be
     .int. Otherwise it will be .fwd. for the forward / left reads,
@@ -492,14 +459,16 @@ a string
 Input parameters for converting libraries to files.
 string workspace_name - the name of the workspace from which to take
    input.
-mapping<read_lib, file_prefix> read_libraries - read library
+mapping<read_lib, file_path_prefix> read_libraries - read library
     objects to convert and the prefix of the file(s) in which the FASTQ
     files will be saved. The set of file_prefixes must be unique.
-bool gzip - if true, gzip the files if they are not already zipped. If
-    false or missing, unzip any zipped files.
-bool interleaved - if true, provide the files in interleaved format if
-    they are not already. If false or missing, provide forward and 
-    reverse reads files.
+tern gzip - if true, gzip any unzipped files. If false, gunzip any
+    zipped files. If null or missing, leave files as is unless
+    unzipping is required for interleaving or deinterleaving, in which
+    case the files will be left unzipped.
+tern interleaved - if true, provide the files in interleaved format if
+    they are not already. If false, provide forward and reverse reads
+    files. If null or missing, leave files as is.
 
 
 =item Definition
@@ -509,9 +478,9 @@ bool interleaved - if true, provide the files in interleaved format if
 <pre>
 a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
-read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_prefix
-gzip has a value which is a kb_read_library_to_file.bool
-interlaced has a value which is a kb_read_library_to_file.bool
+read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_path_prefix
+gzip has a value which is a kb_read_library_to_file.tern
+interlaced has a value which is a kb_read_library_to_file.tern
 
 </pre>
 
@@ -521,9 +490,9 @@ interlaced has a value which is a kb_read_library_to_file.bool
 
 a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
-read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_prefix
-gzip has a value which is a kb_read_library_to_file.bool
-interlaced has a value which is a kb_read_library_to_file.bool
+read_libraries has a value which is a reference to a hash where the key is a kb_read_library_to_file.read_lib and the value is a kb_read_library_to_file.file_path_prefix
+gzip has a value which is a kb_read_library_to_file.tern
+interlaced has a value which is a kb_read_library_to_file.tern
 
 
 =end text
@@ -552,9 +521,10 @@ Other fields:
 string ref - the workspace reference of the reads file, e.g
     workspace_id/object_id/version.
 tern single_genome - whether the reads are from a single genome or a
-metagenome.
+    metagenome. null if unknown.
 tern read_orientation_outward - whether the read orientation is outward
-    from the set of primers. Always false for singled ended reads.
+    from the set of primers. Always false for singled ended reads. null
+    if unknown.
 string sequencing_tech - the sequencing technology used to produce the
     reads. null if unknown.
 KBaseCommon.StrainInfo strain - information about the organism strain
@@ -562,9 +532,9 @@ KBaseCommon.StrainInfo strain - information about the organism strain
 KBaseCommon.SourceInfo source - information about the organism source.
     null if unavailable.
 float insert_size_mean - the mean size of the genetic fragments. null
-    if unavailable.
+    if unavailable or single end read.
 float insert_size_std_dev - the standard deviation of the size of the
-    genetic fragments. null if unavailable.
+    genetic fragments. null if unavailable or single end read.
 int read_count - the number of reads in the this dataset. null if
     unavailable.
 int read_size - the total size of the reads, in bases. null if

@@ -39,7 +39,7 @@ metadata.
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "5a28f8eeda1f17e1d1206ccff1fb44fe86d113d8"
+    GIT_COMMIT_HASH = "37d516b4ed3a1f47340f7449e66093fe00eded2a"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -280,7 +280,7 @@ metadata.
                             e.message)
             raise
 
-        if interleave:
+        if interleave is not False:  # e.g. True or None
             retobj['int'] = self.handle_gzip(shockfile, gzip, isgz,
                                              prefix + '.int.fasta')
         else:
@@ -356,6 +356,10 @@ metadata.
                 self.mv(oldfile, os.path.join(self.scratch, prefix))
             else:
                 self.gzip(oldfile, os.path.join(self.scratch, prefix))
+        elif shouldzip is None:
+            if iszip:
+                prefix += self.GZIP
+            self.mv(oldfile, os.path.join(self.scratch, prefix))
         else:
             if iszip:
                 self.gunzip(oldfile, os.path.join(self.scratch, prefix))
@@ -400,7 +404,6 @@ metadata.
         # 9 - int size
         # 10 - usermeta meta
 
-        # TODO leave files as is re zip/interleave
         single, kbasefile = self.check_reads(reads)
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
@@ -443,13 +446,15 @@ metadata.
 
         return ret
 
-    def process_boolean(self, params, boolname):
-        if boolname not in params or params[boolname] == 'false':
-            params[boolname] = False
+    def process_ternary(self, params, boolname):
+        if boolname not in params or params[boolname] is None:
+            params[boolname] = None
         elif params[boolname] == 'true':
             params[boolname] = True
+        elif params[boolname] == 'false':
+            params[boolname] = False
         else:
-            raise ValueError('Illegal value for boolean parameter {}: {}'
+            raise ValueError('Illegal value for ternary parameter {}: {}'
                              .format(boolname, params[boolname]))
 
     def process_params(self, params):
@@ -476,8 +481,8 @@ metadata.
                 raise ValueError('File prefix specified twice: ' +
                                  reads[read_name])
                 fileprefixes.add(reads[read_name])
-        self.process_boolean(params, self.PARAM_IN_GZIP)
-        self.process_boolean(params, self.PARAM_IN_INTERLEAVED)
+        self.process_ternary(params, self.PARAM_IN_GZIP)
+        self.process_ternary(params, self.PARAM_IN_INTERLEAVED)
 
     def mkdir_p(self, path):
         try:

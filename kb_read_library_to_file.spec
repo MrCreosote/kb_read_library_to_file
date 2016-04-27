@@ -10,12 +10,7 @@ metadata.
 
 module kb_read_library_to_file {
 
-    /* A boolean. Allowed values are 'false' or 'true'. Any other value is
-        invalid.
-     */
-    typedef string bool;
-    
-    /* A ternary. Allowed values are 'false', 'true', or 'unknown'. Any other
+    /* A ternary. Allowed values are 'false', 'true', or null. Any other
         value is invalid.
      */
      typedef string tern;
@@ -43,17 +38,19 @@ module kb_read_library_to_file {
         mapping<read_lib, file_path_prefix> read_libraries - read library
             objects to convert and the prefix of the file(s) in which the FASTQ
             files will be saved. The set of file_prefixes must be unique.
-        bool gzip - if true, gzip the files if they are not already zipped. If
-            false or missing, unzip any zipped files.
-        bool interleaved - if true, provide the files in interleaved format if
-            they are not already. If false or missing, provide forward and 
-            reverse reads files.
+        tern gzip - if true, gzip any unzipped files. If false, gunzip any
+            zipped files. If null or missing, leave files as is unless
+            unzipping is required for interleaving or deinterleaving, in which
+            case the files will be left unzipped.
+        tern interleaved - if true, provide the files in interleaved format if
+            they are not already. If false, provide forward and reverse reads
+            files. If null or missing, leave files as is.
     */
     typedef structure {
         string workspace_name;
         mapping<read_lib, file_path_prefix> read_libraries;
-        bool gzip;
-        bool interlaced;
+        tern gzip;
+        tern interlaced;
     } ConvertReadLibraryParams;
     
     /* Information about each set of reads.
@@ -68,9 +65,10 @@ module kb_read_library_to_file {
         string ref - the workspace reference of the reads file, e.g
             workspace_id/object_id/version.
         tern single_genome - whether the reads are from a single genome or a
-            metagenome.
+            metagenome. null if unknown.
         tern read_orientation_outward - whether the read orientation is outward
-            from the set of primers. Always false for singled ended reads.
+            from the set of primers. Always false for singled ended reads. null
+            if unknown.
         string sequencing_tech - the sequencing technology used to produce the
             reads. null if unknown.
         KBaseCommon.StrainInfo strain - information about the organism strain

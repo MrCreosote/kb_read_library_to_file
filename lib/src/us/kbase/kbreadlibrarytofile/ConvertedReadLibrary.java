@@ -27,9 +27,10 @@ import us.kbase.kbasecommon.StrainInfo;
  * string ref - the workspace reference of the reads file, e.g
  *     workspace_id/object_id/version.
  * tern single_genome - whether the reads are from a single genome or a
- * metagenome.
+ *     metagenome. null if unknown.
  * tern read_orientation_outward - whether the read orientation is outward
- *     from the set of primers. Always false for singled ended reads.
+ *     from the set of primers. Always false for singled ended reads. null
+ *     if unknown.
  * string sequencing_tech - the sequencing technology used to produce the
  *     reads. null if unknown.
  * KBaseCommon.StrainInfo strain - information about the organism strain
@@ -37,9 +38,9 @@ import us.kbase.kbasecommon.StrainInfo;
  * KBaseCommon.SourceInfo source - information about the organism source.
  *     null if unavailable.
  * float insert_size_mean - the mean size of the genetic fragments. null
- *     if unavailable.
+ *     if unavailable or single end read.
  * float insert_size_std_dev - the standard deviation of the size of the
- *     genetic fragments. null if unavailable.
+ *     genetic fragments. null if unavailable or single end read.
  * int read_count - the number of reads in the this dataset. null if
  *     unavailable.
  * int read_size - the total size of the reads, in bases. null if

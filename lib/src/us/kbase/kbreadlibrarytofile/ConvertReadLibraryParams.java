@@ -17,14 +17,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * Input parameters for converting libraries to files.
  * string workspace_name - the name of the workspace from which to take
  *    input.
- * mapping<read_lib, file_prefix> read_libraries - read library
+ * mapping<read_lib, file_path_prefix> read_libraries - read library
  *     objects to convert and the prefix of the file(s) in which the FASTQ
  *     files will be saved. The set of file_prefixes must be unique.
- * bool gzip - if true, gzip the files if they are not already zipped. If
- *     false or missing, unzip any zipped files.
- * bool interleaved - if true, provide the files in interleaved format if
- *     they are not already. If false or missing, provide forward and 
- *     reverse reads files.
+ * tern gzip - if true, gzip any unzipped files. If false, gunzip any
+ *     zipped files. If null or missing, leave files as is unless
+ *     unzipping is required for interleaving or deinterleaving, in which
+ *     case the files will be left unzipped.
+ * tern interleaved - if true, provide the files in interleaved format if
+ *     they are not already. If false, provide forward and reverse reads
+ *     files. If null or missing, leave files as is.
  * </pre>
  * 
  */
