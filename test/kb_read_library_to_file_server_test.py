@@ -16,6 +16,11 @@ import shutil
 import requests
 import inspect
 import hashlib
+import subprocess
+
+
+class TestError(Exception):
+    pass
 
 
 class kb_read_library_to_fileTest(unittest.TestCase):
@@ -281,21 +286,16 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 buf = file_.read(65536)
             return hash_md5.hexdigest()
 
+    # MD5s not repeatable if the same file is gzipped again
     MD5_SM_F = 'e7dcea3e40d73ca0f71d11b044f30ded'
     MD5_SM_R = '2cf41e49cd6b9fdcf1e511b083bb42b5'
     MD5_SM_I = '6271cd02987c9d1c4bdc1733878fe9cf'
-    MD5_SM_F_GZ = '692edc5f7f9526bdace33ccc2a529b7a'
-    MD5_SM_R_GZ = 'f80932c81878f7dd04f1004d0dd7fe39'
-    MD5_SM_I_GZ = '15beb02c25470c1bfe9418e3323ac05c'
 
     def test_basic(self):
         self.run_success(
             {'frbasic': {
-                'gzip': None,
-                'interleave': None,
-                'md5': {'fwd': self.MD5_SM_F,
-                        'rev': self.MD5_SM_R
-                        },
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': False, 'rev': False},
                 'obj': {'files': {'fwd_gz': 'false',
                                   'rev_gz': 'false'
                                   },
@@ -318,10 +318,8 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_interleaved(self):
         self.run_success(
             {'intbasic': {
-                'gzip': None,
-                'interleave': None,
-                'md5': {'int': self.MD5_SM_I,
-                        },
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': False},
                 'obj': {'files': {'int_gz': 'false',
                                   },
                         'gc_content': None,
@@ -340,9 +338,75 @@ class kb_read_library_to_fileTest(unittest.TestCase):
              }
         )
 
+    def test_multiple(self):
+        self.run_success(
+            {'frbasic': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': False, 'rev': False},
+                'obj': {'files': {'fwd_gz': 'false',
+                                  'rev_gz': 'false'
+                                  },
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['frbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                },
+             'intbasic': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': False},
+                'obj': {'files': {'int_gz': 'false',
+                                  },
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['intbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                }
+             }
+        )
+
+    def test_gzip(self):
+        self.run_success(
+            {'frbasic': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': True, 'rev': True},
+                'obj': {'files': {'fwd_gz': 'true',
+                                  'rev_gz': 'true'
+                                  },
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['frbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                }
+             }, gzip='true'
+        )
+
     def run_success(self, testspecs, gzip=None, interleave=None):
         test_name = inspect.stack()[1][3]
-        print('\n==== starting expected success test: ' + test_name + ' =====')
+        print('\n==== starting expected success test: ' + test_name + ' ===\n')
 
         params = {'workspace_name': self.getWsName(),
                   'read_libraries': [f for f in testspecs]
@@ -352,7 +416,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         if interleave != 'none':
             params['interleave'] = interleave
 
-        print('Running converter with params:')
+        print('Running test with params:')
         pprint(params)
 
         ret = self.getImpl().convert_read_library_to_file(self.ctx, params)[0]
@@ -361,8 +425,21 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         retmap = ret['files']
         for f in testspecs:
             for dirc in testspecs[f]['md5']:
+                gz = testspecs[f]['gzp'][dirc]
                 expectedmd5 = testspecs[f]['md5'][dirc]
                 file_ = retmap[f]['files'][dirc]
+                if gz:
+                    if not file_.endswith('.' + dirc + '.fastq.gz'):
+                        raise TestError(
+                            'Expected file {} to end with .{}.fastq.gz'
+                            .format(file_, dirc))
+                    if subprocess.call(['gunzip', file_]):
+                        raise TestError(
+                            'Error unzipping file {}'.format(file_))
+                    file_ = file_[: -3]
+                elif not file_.endswith('.' + dirc + '.fastq'):
+                    raise TestError('Expected file {} to end with .{}.fastq'
+                                    .format(file_, dirc))
                 self.assertEqual(expectedmd5, self.md5(file_))
                 del retmap[f]['files'][dirc]
             self.assertDictEqual(testspecs[f]['obj'], retmap[f])

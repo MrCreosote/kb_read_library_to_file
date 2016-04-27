@@ -102,11 +102,7 @@ Operational notes:
         print(message)
 
     def file_extension_ok(self, filename):
-        # print('Checking extension for file name ' + filename)
-        for ext in self.SUPPORTED_FILES:
-            if filename.lower().endswith(ext):
-                return True
-        return False
+        return filename.lower().endswith(tuple(self.SUPPORTED_FILES))
 
     def check_shock_response(self, response):
         if not response.ok:
@@ -223,7 +219,7 @@ Operational notes:
     def interleave(self, fwdpath, revpath, targetpath):
         print('Interleaving files {} and {} to {}'.format(
               fwdpath, revpath, targetpath))
-        with open(targetpath, '2') as t:
+        with open(targetpath, 'w') as t:
             with open(fwdpath, 'r') as f, open(revpath, 'r') as r:
                 while True:
                     line = f.readline()
@@ -405,6 +401,7 @@ Operational notes:
         return prefix, self.bool_outgoing(zipped)
 
     def mv(self, oldfile, newfile):
+        print('Moving {} to {}'.format(oldfile, newfile))
         shutil.move(oldfile, newfile)
 
     def gzip(self, oldfile, newfile=None):
@@ -412,6 +409,7 @@ Operational notes:
             raise ValueError('File {} is already gzipped'.format(oldfile))
         if not newfile:
             newfile = oldfile + self.GZIP
+        print('gzipping {} to {}'.format(oldfile, newfile))
         with open(oldfile, 'rb') as s, gzip.open(newfile, 'wb') as t:
             shutil.copyfileobj(s, t)
         return newfile
@@ -420,7 +418,8 @@ Operational notes:
         if not oldfile.lower().endswith(self.GZIP):
             raise ValueError('File {} is not gzipped'.format(oldfile))
         if not newfile:
-            newfile = oldfile + self.GZIP
+            newfile = oldfile[: -len(self.GZIP)]
+        print('gunzipping {} to {}'.format(oldfile, newfile))
         with gzip.open(oldfile, 'rb') as s, open(newfile, 'wb') as t:
             shutil.copyfileobj(s, t)
         return newfile
@@ -539,7 +538,6 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
-    
 
     def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object
@@ -583,8 +581,8 @@ Operational notes:
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
             output[read_name] = self.process_reads(
-                read, params[self.PARAM_IN_INTERLEAVED],
-                params[self.PARAM_IN_GZIP], token)
+                read, params[self.PARAM_IN_GZIP],
+                params[self.PARAM_IN_INTERLEAVED], token)
         output = {'files': output}
         #END convert_read_library_to_file
 
