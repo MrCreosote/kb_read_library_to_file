@@ -291,6 +291,8 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     MD5_SM_R = '2cf41e49cd6b9fdcf1e511b083bb42b5'
     MD5_SM_I = '6271cd02987c9d1c4bdc1733878fe9cf'
     MD5_FR_TO_I = '1c58d7d59c656db39cedcb431376514b'
+    MD5_I_TO_F = '4a5f4c05aae26dcb288c0faec6583946'
+    MD5_I_TO_R = '2be8de9afa4bcd1f437f35891363800a'
 
     def test_basic(self):
         self.run_success(
@@ -402,7 +404,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                         'strain': None
                         }
                 }
-             }, gzip='true'
+             }, gzip='true', interleave='none'
         )
 
     def test_fr_to_interleave(self):
@@ -426,6 +428,30 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                         }
                 }
              }, interleave='true'
+        )
+
+    def test_deinterleave(self):
+        self.run_success(
+            {'intbasic': {
+                'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
+                'gzp': {'fwd': False, 'rev': False},
+                'obj': {'files': {'fwd_gz': 'false',
+                                  'rev_gz': 'false'
+                                  },
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['intbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                }
+             }, interleave='false'
         )
 
     def run_success(self, testspecs, gzip=None, interleave=None):
