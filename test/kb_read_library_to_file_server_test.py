@@ -270,17 +270,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         int_reads_gz = {'file': 'data/interleaved.fq.gz',
                         'name': '',
                         'type': ''}
+        # happy path objects
+        # load KBF.P int, KBF.P fr, KBF.S KBA.P int, KBA.P fr, KBA.S
+        # w/wo gz
         cls.upload_assembly('frbasic', sq, fwd_reads, rev_reads=rev_reads)
         cls.upload_assembly('frbasic_gz', sq, fwd_reads_gz,
                             rev_reads=rev_reads)
-        cls.upload_assembly('intbasic', dictmerge(sq, {'single_genome': 1}),
-                            int_reads)
-        cls.upload_assembly('intbasic_gz', dictmerge(sq, {'single_genome': 1}),
-                            int_reads_gz)
-        cls.upload_assembly('meta', dictmerge(sq, {'single_genome': 0}),
-                            int_reads)
-        cls.upload_assembly('reads_out', dictmerge(
-            sq, {'read_orientation_outward': 1}), int_reads)
+        cls.upload_assembly('intbasic', sq, int_reads)
+        cls.upload_assembly('intbasic_gz', sq, int_reads_gz)
         cls.upload_assembly('frbasic_kbassy', {}, fwd_reads,
                             rev_reads=rev_reads, kbase_assy=True)
         cls.upload_assembly('frbasic_kbassy_gz', {}, fwd_reads,
@@ -294,6 +291,84 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                             single_end=True, kbase_assy=True)
         cls.upload_assembly('single_end_kbassy_gz', {}, rev_reads_gz,
                             single_end=True, kbase_assy=True)
+
+        # load objects with optional fields
+        cls.upload_assembly(
+            'kbassy_roo_t',
+            {'insert_size_mean': 42,
+             'insert_size_std_dev': 1000000,
+             'read_orientation_outward': 1},
+            fwd_reads, kbase_assy=True)
+        cls.upload_assembly(
+            'kbassy_roo_f',
+            {'insert_size_mean': 43,
+             'insert_size_std_dev': 1000001,
+             'read_orientation_outward': 0},
+            fwd_reads, kbase_assy=True)
+        cls.upload_assembly(
+            'kbfile_sing_sg_t',
+            {'single_genome': 1,
+             'strain': {'genus': 'Yersinia',
+                        'species': 'pestis',
+                        'strain': 'happypants'
+                        },
+             'source': {'source': 'my pants'},
+             'sequencing_tech': 'IonTorrent',
+             'read_count': 3,
+             'read_size': 12,
+             'gc_content': 2.3
+             },
+            fwd_reads, single_end=True)
+        cls.upload_assembly(
+            'kbfile_sing_sg_f',
+            {'single_genome': 0,
+             'strain': {'genus': 'Deinococcus',
+                        'species': 'radiodurans',
+                        'strain': 'radiopants'
+                        },
+             'source': {'source': 'also my pants'},
+             'sequencing_tech': 'PacBio CCS',
+             'read_count': 4,
+             'read_size': 13,
+             'gc_content': 2.4
+             },
+            fwd_reads, single_end=True)
+        cls.upload_assembly(
+            'kbfile_pe_t',
+            {'single_genome': 1,
+             'read_orientation_outward': 1,
+             'insert_size_mean': 50,
+             'insert_size_std_dev': 1000002,
+             'strain': {'genus': 'Bacillus',
+                        'species': 'subtilis',
+                        'strain': 'soilpants'
+                        },
+             'source': {'source': 'my other pants'},
+             'sequencing_tech': 'Sanger',
+             'read_count': 5,
+             'read_size': 14,
+             'gc_content': 2.5
+             },
+            fwd_reads)
+        cls.upload_assembly(
+            'kbfile_pe_f',
+            {'single_genome': 0,
+             'read_orientation_outward': 0,
+             'insert_size_mean': 51,
+             'insert_size_std_dev': 1000003,
+             'strain': {'genus': 'Escheria',
+                        'species': 'coli',
+                        'strain': 'poopypants'
+                        },
+             'source': {'source': 'my ex-pants'},
+             'sequencing_tech': 'PacBio CLR',
+             'read_count': 6,
+             'read_size': 15,
+             'gc_content': 2.6
+             },
+            fwd_reads)
+
+        # load bad data for unhappy path testing
         shutil.copy2('data/small.forward.fq', 'data/small.forward.bad')
         bad_fn_reads = {'file': 'data/small.forward.bad',
                         'name': '',
@@ -332,20 +407,22 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     MD5_I_TO_F = '4a5f4c05aae26dcb288c0faec6583946'
     MD5_I_TO_R = '2be8de9afa4bcd1f437f35891363800a'
 
-    STD_OBJ_KBF = {'gc_content': None,
-                   'insert_size_mean': None,
-                   'insert_size_std_dev': None,
-                   'read_count': None,
-                   'read_orientation_outward': 'false',
-                   'read_size': None,
-                   'sequencing_tech': u'fake data',
-                   'single_genome': 'true',
-                   'source': None,
-                   'strain': None
-                   }
+    STD_OBJ_KBF_P = {'gc_content': None,
+                     'insert_size_mean': None,
+                     'insert_size_std_dev': None,
+                     'read_count': None,
+                     'read_orientation_outward': 'false',
+                     'read_size': None,
+                     'sequencing_tech': u'fake data',
+                     'single_genome': 'true',
+                     'source': None,
+                     'strain': None
+                     }
+    STD_OBJ_KBF_S = dictmerge(STD_OBJ_KBF_P,
+                              {'read_orientation_outward': None})
 
     STD_OBJ_KBA = dictmerge(
-        STD_OBJ_KBF,
+        STD_OBJ_KBF_P,
         {'read_orientation_outward': None,
          'sequencing_tech': None,
          'single_genome': None
@@ -357,7 +434,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -373,7 +450,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -384,7 +461,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -399,7 +476,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -410,15 +487,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'single_end_gz': {
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -429,8 +505,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }
@@ -442,7 +517,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -464,7 +539,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'false'
                                },
@@ -491,7 +566,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -511,7 +586,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
@@ -527,7 +602,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
                 }
-             }
+             }, interleave='none'
         )
 
     def test_gzip(self):
@@ -536,7 +611,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'true'
                                },
@@ -558,7 +633,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -578,7 +653,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -589,15 +664,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'true'
                                },
@@ -619,7 +693,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
@@ -639,7 +713,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -650,8 +724,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, gzip='true', interleave='none'
@@ -663,7 +736,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -685,7 +758,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -705,7 +778,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -716,15 +789,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -746,7 +818,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
@@ -766,7 +838,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -777,8 +849,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, gzip='false'
@@ -790,7 +861,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['frbasic']['ref']
@@ -809,7 +880,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -829,7 +900,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -840,15 +911,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false'},
                      'ref': self.staged['frbasic_gz']['ref']
                      })
@@ -866,7 +936,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
@@ -886,7 +956,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -897,8 +967,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, interleave='true'
@@ -910,7 +979,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['frbasic']['ref']
@@ -929,7 +998,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -949,7 +1018,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -960,15 +1029,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true'},
                      'ref': self.staged['frbasic_gz']['ref']
                      })
@@ -986,7 +1054,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
@@ -1006,7 +1074,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -1017,8 +1085,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, interleave='true', gzip='true'
@@ -1030,7 +1097,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['frbasic']['ref']
@@ -1049,7 +1116,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
@@ -1069,7 +1136,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -1080,15 +1147,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false'},
                      'ref': self.staged['frbasic_gz']['ref']
                      })
@@ -1106,7 +1172,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
@@ -1126,7 +1192,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -1137,8 +1203,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, interleave='true', gzip='false'
@@ -1150,7 +1215,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1172,7 +1237,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1194,7 +1259,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -1205,15 +1270,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'false'
                                },
@@ -1235,7 +1299,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1257,7 +1321,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -1268,8 +1332,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, interleave='false', gzip='none'
@@ -1281,7 +1344,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': True, 'rev': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'true'
                                },
@@ -1303,7 +1366,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'true'
                                },
@@ -1325,7 +1388,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -1336,15 +1399,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'true'
                                },
@@ -1366,7 +1428,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': True, 'rev': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'true',
                                'rev_gz': 'true'
                                },
@@ -1388,7 +1450,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': True},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -1399,8 +1461,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, interleave='false', gzip='true'
@@ -1412,7 +1473,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1434,7 +1495,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1456,7 +1517,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end']['ref']
                      })
@@ -1467,15 +1528,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy']['ref']
                      })
                 },
              'frbasic_gz': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1497,7 +1557,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': False, 'rev': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_P,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
@@ -1519,7 +1579,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'md5': {'sing': self.MD5_SM_F},
                 'gzp': {'sing': False},
                 'obj': dictmerge(
-                    self.STD_OBJ_KBF,
+                    self.STD_OBJ_KBF_S,
                     {'files': {'sing_gz': 'false'},
                      'ref': self.staged['single_end_gz']['ref']
                      })
@@ -1530,14 +1590,39 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'false'},
-                     'ref': self.staged['single_end_kbassy_gz']['ref'],
-                     'read_orientation_outward': 'false'
+                     'ref': self.staged['single_end_kbassy_gz']['ref']
                      })
                 }
              }, interleave='false', gzip='false'
         )
 
+    def test_object_contents_single_end_metagenome(self):
+        self.run_success(
+            {'kbfile_sing_sg_f': {
+                'md5': {'sing': self.MD5_SM_F},
+                'gzp': {'sing': False},
+                'obj': {'files': {'sing_gz': 'false'},
+                        'ref': self.staged['kbfile_sing_sg_f']['ref'],
+                        'single_genome': 'false',
+                        'strain': {u'genus': u'Deinococcus',
+                                   u'species': u'radiodurans',
+                                   u'strain': u'radiopants'
+                                   },
+                        'source': {u'source': u'also my pants'},
+                        'sequencing_tech': u'PacBio CCS',
+                        'read_count': 4,
+                        'read_size': 13,
+                        'gc_content': 2.4,
+                        'read_orientation_outward': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None
+                        }
+                }
+             }
+        )
+
     def run_success(self, testspecs, gzip=None, interleave=None):
+        self.maxDiff = None
         test_name = inspect.stack()[1][3]
         print('\n**** starting expected success test: ' + test_name + ' ***\n')
 

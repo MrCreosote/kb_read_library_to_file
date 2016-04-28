@@ -56,7 +56,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "065ca0e1c28c9c56218817491a2720a0f60a2365"
+    GIT_COMMIT_HASH = "a23827489aedcf3396677650d6800917b75f372f"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -256,17 +256,11 @@ Operational notes:
 
         roo = 'read_orientation_outward'
         if single:
-            ret[roo] = self.FALSE
+            ret[roo] = self.UNKNOWN
         elif roo in data:
-            if data[roo]:
-                ret[roo] = self.TRUE
-            else:
-                ret[roo] = self.FALSE
+            ret[roo] = self.TRUE if data[roo] else self.FALSE
         else:
-            if kbasefile:
-                ret[roo] = self.FALSE
-            else:
-                ret[roo] = self.UNKNOWN
+            ret[roo] = self.FALSE if kbasefile else self.UNKNOWN
 
         # these fields are only possible in KBaseFile/Assy paired end, but the
         # logic is still fine for single end, will just force a null
@@ -545,6 +539,7 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
+    
 
     def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object
