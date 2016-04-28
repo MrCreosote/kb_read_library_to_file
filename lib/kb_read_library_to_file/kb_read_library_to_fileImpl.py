@@ -445,6 +445,7 @@ Operational notes:
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
         ref = ret['ref']
+        print('\tType: ' + info[2])
 
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
         if kbasefile:
@@ -471,7 +472,7 @@ Operational notes:
                 ret['files'] = self.process_single_end(
                     ref, obj_name, token, data['handle'], gzip)
             else:
-                if 'handle2' in data:  # not interleaved
+                if 'handle_2' in data:  # not interleaved
                     ret['files'] = self.process_paired(
                         ref, obj_name, token, data['handle_1'],
                         data['handle_2'], gzip, interleave)
@@ -582,6 +583,7 @@ Operational notes:
 
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
+            print('\n== processing read library ' + read_name)
             output[read_name] = self.process_reads(
                 read, params[self.PARAM_IN_GZIP],
                 params[self.PARAM_IN_INTERLEAVED], token)
