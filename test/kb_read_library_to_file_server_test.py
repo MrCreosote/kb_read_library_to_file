@@ -782,6 +782,63 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      'ref': self.staged['single_end_kbassy']['ref'],
                      'read_orientation_outward': 'false'
                      })
+                },
+             'frbasic_gz': {
+                'md5': {'int': self.MD5_FR_TO_I},
+                'gzp': {'int': False},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'int_gz': 'false'},
+                     'ref': self.staged['frbasic_gz']['ref']
+                     })
+                },
+             'frbasic_kbassy_gz': {
+                'md5': {'int': self.MD5_FR_TO_I},
+                'gzp': {'int': False},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'int_gz': 'false'},
+                     'ref': self.staged['frbasic_kbassy_gz']['ref']
+                     })
+                },
+             'intbasic_gz': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'int_gz': 'true',
+                               },
+                     'ref': self.staged['intbasic_gz']['ref']
+                     })
+                },
+             'intbasic_kbassy_gz': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'int_gz': 'true',
+                               },
+                     'ref': self.staged['intbasic_kbassy_gz']['ref']
+                     })
+                },
+             'single_end_gz': {
+                'md5': {'sing': self.MD5_SM_F},
+                'gzp': {'sing': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'sing_gz': 'true'},
+                     'ref': self.staged['single_end_gz']['ref']
+                     })
+                },
+             'single_end_kbassy_gz': {
+                'md5': {'sing': self.MD5_SM_R},
+                'gzp': {'sing': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'sing_gz': 'true'},
+                     'ref': self.staged['single_end_kbassy_gz']['ref'],
+                     'read_orientation_outward': 'false'
+                     })
                 }
              }, interleave='true'
         )
