@@ -1,11 +1,10 @@
 import unittest
 import os
-import json
 import time
 
 from os import environ
 from ConfigParser import ConfigParser
-from pprint import pprint, pformat
+from pprint import pprint
 
 from biokbase.workspace.client import Workspace as workspaceService  # @UnresolvedImport @IgnorePep8
 from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file  # @IgnorePep8
@@ -287,8 +286,9 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             return hash_md5.hexdigest()
 
     def dictmerge(self, x, y):
-        x.update(y)
-        return x
+        z = x.copy()
+        z.update(y)
+        return z
 
     # MD5s not repeatable if the same file is gzipped again
     MD5_SM_F = 'e7dcea3e40d73ca0f71d11b044f30ded'
@@ -315,12 +315,12 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'frbasic': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
-                'obj': self.dictmerge(
+                'obj': self.dictmerge(self.STD_OBJ,
                     {'files': {'fwd_gz': 'false',
                                'rev_gz': 'false'
                                },
-                     'ref': self.staged['frbasic']['ref'],
-                     }, self.STD_OBJ)
+                     'ref': self.staged['frbasic']['ref']
+                     })
                 }
              }
         )
@@ -330,20 +330,11 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'intbasic': {
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false',
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['intbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'int_gz': 'false',
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
                 }
              }
         )
@@ -353,39 +344,21 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'frbasic': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
-                'obj': {'files': {'fwd_gz': 'false',
-                                  'rev_gz': 'false'
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['frbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'fwd_gz': 'false',
+                               'rev_gz': 'false'
+                               },
+                     'ref': self.staged['frbasic']['ref']
+                     })
                 },
              'intbasic': {
                 'md5': {'int': self.MD5_SM_I},
                 'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false',
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['intbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'int_gz': 'false',
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
                 }
              }
         )
@@ -395,21 +368,12 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'frbasic': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': True, 'rev': True},
-                'obj': {'files': {'fwd_gz': 'true',
-                                  'rev_gz': 'true'
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['frbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'fwd_gz': 'true',
+                               'rev_gz': 'true'
+                               },
+                     'ref': self.staged['frbasic']['ref']
+                     })
                 }
              }, gzip='true', interleave='none'
         )
@@ -419,20 +383,11 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'frbasic': {
                 'md5': {'int': self.MD5_FR_TO_I},
                 'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false',
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['frbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'int_gz': 'false',
+                               },
+                     'ref': self.staged['frbasic']['ref']
+                     })
                 }
              }, interleave='true'
         )
@@ -442,21 +397,12 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'intbasic': {
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': False, 'rev': False},
-                'obj': {'files': {'fwd_gz': 'false',
-                                  'rev_gz': 'false'
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['intbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'fwd_gz': 'false',
+                               'rev_gz': 'false'
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
                 }
              }, interleave='false'
         )
@@ -466,21 +412,12 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             {'intbasic': {
                 'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
                 'gzp': {'fwd': True, 'rev': True},
-                'obj': {'files': {'fwd_gz': 'true',
-                                  'rev_gz': 'true'
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['intbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(self.STD_OBJ,
+                    {'files': {'fwd_gz': 'true',
+                               'rev_gz': 'true'
+                               },
+                     'ref': self.staged['intbasic']['ref']
+                     })
                 }
              }, interleave='false', gzip='true'
         )
@@ -504,6 +441,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         print('converter returned:')
         pprint(ret)
         retmap = ret['files']
+        self.assertEqual(len(retmap), len(testspecs))
         for f in testspecs:
             for dirc in testspecs[f]['md5']:
                 gz = testspecs[f]['gzp'][dirc]
