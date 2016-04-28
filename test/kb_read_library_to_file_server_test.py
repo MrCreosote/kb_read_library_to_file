@@ -286,6 +286,10 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                 buf = file_.read(65536)
             return hash_md5.hexdigest()
 
+    def dictmerge(self, x, y):
+        x.update(y)
+        return x
+
     # MD5s not repeatable if the same file is gzipped again
     MD5_SM_F = 'e7dcea3e40d73ca0f71d11b044f30ded'
     MD5_SM_R = '2cf41e49cd6b9fdcf1e511b083bb42b5'
@@ -294,26 +298,29 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     MD5_I_TO_F = '4a5f4c05aae26dcb288c0faec6583946'
     MD5_I_TO_R = '2be8de9afa4bcd1f437f35891363800a'
 
+    STD_OBJ = {'gc_content': None,
+               'insert_size_mean': None,
+               'insert_size_std_dev': None,
+               'read_count': None,
+               'read_orientation_outward': 'false',
+               'read_size': None,
+               'sequencing_tech': u'fake data',
+               'single_genome': 'true',
+               'source': None,
+               'strain': None
+               }
+
     def test_basic(self):
         self.run_success(
             {'frbasic': {
                 'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
                 'gzp': {'fwd': False, 'rev': False},
-                'obj': {'files': {'fwd_gz': 'false',
-                                  'rev_gz': 'false'
-                                  },
-                        'gc_content': None,
-                        'insert_size_mean': None,
-                        'insert_size_std_dev': None,
-                        'read_count': None,
-                        'read_orientation_outward': 'false',
-                        'read_size': None,
-                        'ref': self.staged['frbasic']['ref'],
-                        'sequencing_tech': u'fake data',
-                        'single_genome': 'true',
-                        'source': None,
-                        'strain': None
-                        }
+                'obj': self.dictmerge(
+                    {'files': {'fwd_gz': 'false',
+                               'rev_gz': 'false'
+                               },
+                     'ref': self.staged['frbasic']['ref'],
+                     }, self.STD_OBJ)
                 }
              }
         )
@@ -454,6 +461,30 @@ class kb_read_library_to_fileTest(unittest.TestCase):
              }, interleave='false'
         )
 
+    def test_deinterleave_and_gzip(self):
+        self.run_success(
+            {'intbasic': {
+                'md5': {'fwd': self.MD5_I_TO_F, 'rev': self.MD5_I_TO_R},
+                'gzp': {'fwd': True, 'rev': True},
+                'obj': {'files': {'fwd_gz': 'true',
+                                  'rev_gz': 'true'
+                                  },
+                        'gc_content': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None,
+                        'read_count': None,
+                        'read_orientation_outward': 'false',
+                        'read_size': None,
+                        'ref': self.staged['intbasic']['ref'],
+                        'sequencing_tech': u'fake data',
+                        'single_genome': 'true',
+                        'source': None,
+                        'strain': None
+                        }
+                }
+             }, interleave='false', gzip='true'
+        )
+
     def run_success(self, testspecs, gzip=None, interleave=None):
         test_name = inspect.stack()[1][3]
         print('\n==== starting expected success test: ' + test_name + ' ===\n')
@@ -483,7 +514,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                         raise TestError(
                             'Expected file {} to end with .{}.fastq.gz'
                             .format(file_, dirc))
-                    if subprocess.call(['gunzip', file_]):
+                    if subprocess.call(['gunzip', '-f', file_]):
                         raise TestError(
                             'Error unzipping file {}'.format(file_))
                     file_ = file_[: -3]
