@@ -413,6 +413,25 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      'ref': self.staged['single_end_kbassy']['ref'],
                      'read_orientation_outward': 'false'
                      })
+                },
+             'single_end_gz': {
+                'md5': {'sing': self.MD5_SM_F},
+                'gzp': {'sing': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'sing_gz': 'true'},
+                     'ref': self.staged['single_end_gz']['ref']
+                     })
+                },
+             'single_end_kbassy_gz': {
+                'md5': {'sing': self.MD5_SM_R},
+                'gzp': {'sing': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'sing_gz': 'true'},
+                     'ref': self.staged['single_end_kbassy_gz']['ref'],
+                     'read_orientation_outward': 'false'
+                     })
                 }
              }
         )
@@ -440,8 +459,30 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                                },
                      'ref': self.staged['frbasic_kbassy']['ref']
                      })
+                },
+             'frbasic_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': True, 'rev': False},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'fwd_gz': 'true',
+                               'rev_gz': 'false'
+                               },
+                     'ref': self.staged['frbasic_gz']['ref']
+                     })
+                },
+             'frbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': False, 'rev': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'fwd_gz': 'false',
+                               'rev_gz': 'true'
+                               },
+                     'ref': self.staged['frbasic_kbassy_gz']['ref']
+                     })
                 }
-             }
+             }, gzip='none'
         )
 
     def test_interleaved(self):
@@ -464,6 +505,26 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                     {'files': {'int_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
+                     })
+                },
+             'intbasic_gz': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'int_gz': 'true',
+                               },
+                     'ref': self.staged['intbasic_gz']['ref']
+                     })
+                },
+             'intbasic_kbassy_gz': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'int_gz': 'true',
+                               },
+                     'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
                 }
              }
@@ -720,7 +781,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      'read_orientation_outward': 'false'
                      })
                 }
-             }, gzip='false', interleave='none'
+             }, gzip='false'
         )
 
     def test_fr_to_interleave(self):
@@ -1044,7 +1105,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
     def run_success(self, testspecs, gzip=None, interleave=None):
         test_name = inspect.stack()[1][3]
-        print('\n==== starting expected success test: ' + test_name + ' ===\n')
+        print('\n**** starting expected success test: ' + test_name + ' ***\n')
 
         params = {'workspace_name': self.getWsName(),
                   'read_libraries': [f for f in testspecs]
@@ -1054,16 +1115,18 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         if interleave != 'none':
             params['interleaved'] = interleave
 
-        print('Running test with params:')
+        print('Running test with {} libs. Params:'.format(len(testspecs)))
         pprint(params)
 
         ret = self.getImpl().convert_read_library_to_file(self.ctx, params)[0]
-        print('converter returned:')
+        print('\n== converter returned:')
         pprint(ret)
         retmap = ret['files']
         self.assertEqual(len(retmap), len(testspecs))
         for f in testspecs:
+            print('== checking testspec ' + f)
             for dirc in testspecs[f]['md5']:
+                print('\t== checking read set ' + dirc)
                 gz = testspecs[f]['gzp'][dirc]
                 expectedmd5 = testspecs[f]['md5'][dirc]
                 file_ = retmap[f]['files'][dirc]

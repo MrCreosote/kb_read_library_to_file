@@ -98,11 +98,17 @@ Operational notes:
 
     SHOCK_TEMP = 'shock_tmp'
 
-    def log(self, message):
-        print(message)
+    def log(self, message, prefix_newline=False):
+        print(('\n' if prefix_newline else '') +
+              str(time.time()) + ': ' + message)
 
     def file_extension_ok(self, filename):
-        return filename.lower().endswith(tuple(self.SUPPORTED_FILES))
+        for okext in self.SUPPORTED_FILES:
+            if filename.lower().endswith(okext):
+                if okext.endswith(self.GZIP):
+                    return okext, True
+                return okext, False
+        return None, None
 
     def check_shock_response(self, response):
         if not response.ok:
@@ -120,9 +126,7 @@ Operational notes:
         # downloads if 2 ws objects point to the same shock node, but that
         # seems rare enough that it's not worth the extra code complexity and
         # maintenance burden
-        self.log('Downloading from shock via handle:')
-        self.log(pformat(handle))
-        file_name = handle['id']
+        self.log('Downloading from shock via handle:\n' + pformat(handle))
 
         headers = {'Authorization': 'OAuth ' + token}
         node_url = handle['url'] + '/node/' + handle['id']
@@ -133,26 +137,26 @@ Operational notes:
 
         handle_fn = handle['file_name'] if 'file_name' in handle else None
 
-        print('File type: ' + str(file_type))
-        print('Handle fn: ' + str(handle_fn))
-        print('Shock fn: ' + str(node_fn))
-
-        if file_type:
-            if not file_type.startswith('.'):
-                file_type = '.' + file_type
-            file_name += file_type
-            print('using file name via type: ' + file_name)
-        elif handle_fn:
-            file_name += '_' + handle_fn
-            print('using file name from handle: ' + file_name)
-        else:
-            file_name += '_' + node_fn
-            print('using file name from node: ' + file_name)
-
-        if not self.file_extension_ok(file_name):
+        fileok = None
+        for txt, fn in zip(['file type', 'handle filename', 'shock filename'],
+                           [file_type, handle_fn, node_fn]):
+            if fn:
+                fileok, gzipped = self.file_extension_ok(fn)
+                if fileok:
+                    self.log(('Found acceptable file extension in {}: {}. ' +
+                             'File {} gzipped.').format(
+                        txt, fn, 'is' if gzipped else 'is not'))
+                    break
+                else:
+                    self.log('File extension from {}: {} is not acceptable'
+                             .format(txt, fn))
+            else:
+                self.log('File extension cannot be determined from {}: {}'
+                         .format(txt, fn))
+        if not fileok:
             raise ShockError(
-                ('A valid filename could not be determined for the reads ' +
-                 'file. In order of precedence:\n' +
+                ('A valid file extension could not be determined for the ' +
+                 'reads file. In order of precedence:\n' +
                  'File type is: {}\n' +
                  'Handle file name is: {}\n' +
                  'Shock file name is: {}\n' +
@@ -160,7 +164,8 @@ Operational notes:
                     file_type, handle_fn, node_fn,
                     ' '.join(self.SUPPORTED_FILES)))
 
-        file_path = os.path.join(self.shock_temp, file_name)
+        file_path = os.path.join(self.shock_temp, handle['id'] +
+                                 (self.GZIP if gzipped else ''))
         with open(file_path, 'w') as fhandle:
             self.log('downloading reads file: ' + str(file_path))
             r = requests.get(node_url + '?download', stream=True,
@@ -170,8 +175,7 @@ Operational notes:
                 if not chunk:
                     break
                 fhandle.write(chunk)
-        self.log('done')
-        return file_path, file_path.lower().endswith(self.GZIP)
+        return file_path, gzipped
 
     def make_ref(self, object_info):
         return str(object_info[6]) + '/' + str(object_info[0]) + \
@@ -203,8 +207,8 @@ Operational notes:
     # be if it's in kbase. Credit:
     # https://www.biostars.org/p/19446/#117160
     def deinterleave(self, filepath, fwdpath, revpath):
-        print('Deinterleaving file {} to files {} and {}'.format(
-              filepath, fwdpath, revpath))
+        self.log('Deinterleaving file {} to files {} and {}'.format(
+            filepath, fwdpath, revpath))
         with open(filepath, 'r') as s:
             with open(fwdpath, 'w') as f, open(revpath, 'w') as r:
                 for i, line in enumerate(s):
@@ -217,8 +221,8 @@ Operational notes:
     # which they should be if they're in kbase. Credit:
     # https://sourceforge.net/p/denovoassembler/ray-testsuite/ci/master/tree/scripts/interleave-fastq.py
     def interleave(self, fwdpath, revpath, targetpath):
-        print('Interleaving files {} and {} to {}'.format(
-              fwdpath, revpath, targetpath))
+        self.log('Interleaving files {} and {} to {}'.format(
+            fwdpath, revpath, targetpath))
         with open(targetpath, 'w') as t:
             with open(fwdpath, 'r') as f, open(revpath, 'r') as r:
                 while True:
@@ -402,7 +406,7 @@ Operational notes:
         return prefix, self.bool_outgoing(zipped)
 
     def mv(self, oldfile, newfile):
-        print('Moving {} to {}'.format(oldfile, newfile))
+        self.log('Moving {} to {}'.format(oldfile, newfile))
         shutil.move(oldfile, newfile)
 
     def gzip(self, oldfile, newfile=None):
@@ -410,7 +414,7 @@ Operational notes:
             raise ValueError('File {} is already gzipped'.format(oldfile))
         if not newfile:
             newfile = oldfile + self.GZIP
-        print('gzipping {} to {}'.format(oldfile, newfile))
+        self.log('gzipping {} to {}'.format(oldfile, newfile))
         with open(oldfile, 'rb') as s, gzip.open(newfile, 'wb') as t:
             shutil.copyfileobj(s, t)
         return newfile
@@ -420,7 +424,7 @@ Operational notes:
             raise ValueError('File {} is not gzipped'.format(oldfile))
         if not newfile:
             newfile = oldfile[: -len(self.GZIP)]
-        print('gunzipping {} to {}'.format(oldfile, newfile))
+        self.log('gunzipping {} to {}'.format(oldfile, newfile))
         with gzip.open(oldfile, 'rb') as s, open(newfile, 'wb') as t:
             shutil.copyfileobj(s, t)
         return newfile
@@ -445,7 +449,7 @@ Operational notes:
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
         ref = ret['ref']
-        print('\tType: ' + info[2])
+        self.log('Type: ' + info[2])
 
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
         if kbasefile:
@@ -556,17 +560,18 @@ Operational notes:
                 the reads files that return. Race conditions possible though.
                 Probably better to add flag to get_objects.
             Parallelize - probably not worth it, this is all IO bound. Try if
-                there's nothing better to do.
+                there's nothing better to do. If so, each process/thread needs
+                its own shock_tmp folder.
         '''
 
         # TODO tests - run through all logic
-        self.log('Running convert_read_library_to_file with params:')
-        self.log(pformat(params))
+        self.log('Running convert_read_library_to_file with params:\n' +
+                 pformat(params))
 
         token = ctx['token']
 
         self.process_params(params)
-#         self.log(pformat(params))
+#         self.log('\n' + pformat(params))
 
         # Get the reads library
         ws = workspaceService(self.workspaceURL, token=token)
@@ -577,14 +582,13 @@ Operational notes:
         try:
             reads = ws.get_objects(ws_reads_ids)
         except WorkspaceException, e:
-            print('Logging stacktrace from workspace exception at epoch {}:'
-                  .format(time.time()))
-            print(e.data)
+            self.log('Logging stacktrace from workspace exception\n:' + e.data)
             raise
 
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
-            print('\n== processing read library ' + read_name)
+            self.log('=== processing read library ' + read_name + '===\n',
+                     prefix_newline=True)
             output[read_name] = self.process_reads(
                 read, params[self.PARAM_IN_GZIP],
                 params[self.PARAM_IN_INTERLEAVED], token)
