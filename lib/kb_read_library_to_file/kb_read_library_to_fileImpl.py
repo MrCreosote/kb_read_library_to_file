@@ -491,7 +491,8 @@ Operational notes:
         elif params[boolname] == 'false':
             params[boolname] = False
         else:
-            raise ValueError('Illegal value for ternary parameter {}: {}'
+            raise ValueError(('Illegal value for ternary parameter {}: {}. ' +
+                              'Allowed values are "true", "false", and null.')
                              .format(boolname, params[boolname]))
 
     def process_params(self, params):
