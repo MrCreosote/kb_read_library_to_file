@@ -21,6 +21,7 @@ import subprocess
 class TestError(Exception):
     pass
 
+
 def dictmerge(x, y):
     z = x.copy()
     z.update(y)
@@ -233,36 +234,65 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             })
 
     @classmethod
+    def gzip(cls, *files):
+        for f in files:
+            if subprocess.call(['gzip', '-f', '-k', f]):
+                raise TestError(
+                    'Error zipping file {}'.format(f))
+
+    @classmethod
     def setupTestData(cls):
         print('Shock url ' + cls.shockURL)
         print('WS url ' + cls.wsClient.url)
         print('Handle service url ' + cls.hs.url)
         print('staging data')
         sq = {'sequencing_tech': 'fake data'}
+        cls.gzip('data/small.forward.fq', 'data/small.reverse.fq',
+                 'data/interleaved.fq')
         # get file type from type
         fwd_reads = {'file': 'data/small.forward.fq',
                      'name': 'test_fwd.fastq',
                      'type': 'fastq'}
+        fwd_reads_gz = {'file': 'data/small.forward.fq.gz',
+                        'name': 'test_fwd.fastq.gz',
+                        'type': 'fastq.Gz'}
         # get file type from handle file name
         rev_reads = {'file': 'data/small.reverse.fq',
                      'name': 'test_rev.FQ',
                      'type': ''}
+        rev_reads_gz = {'file': 'data/small.reverse.fq.gz',
+                        'name': 'test_rev.FQ.gZ',
+                        'type': ''}
         # get file type from shock node file name
         int_reads = {'file': 'data/interleaved.fq',
                      'name': '',
                      'type': ''}
+        int_reads_gz = {'file': 'data/interleaved.fq.gz',
+                        'name': '',
+                        'type': ''}
         cls.upload_assembly('frbasic', sq, fwd_reads, rev_reads=rev_reads)
+        cls.upload_assembly('frbasic_gz', sq, fwd_reads_gz,
+                            rev_reads=rev_reads)
         cls.upload_assembly('intbasic', dictmerge(sq, {'single_genome': 1}),
                             int_reads)
+        cls.upload_assembly('intbasic_gz', dictmerge(sq, {'single_genome': 1}),
+                            int_reads_gz)
         cls.upload_assembly('meta', dictmerge(sq, {'single_genome': 0}),
                             int_reads)
         cls.upload_assembly('reads_out', dictmerge(
             sq, {'read_orientation_outward': 1}), int_reads)
         cls.upload_assembly('frbasic_kbassy', {}, fwd_reads,
                             rev_reads=rev_reads, kbase_assy=True)
+        cls.upload_assembly('frbasic_kbassy_gz', {}, fwd_reads,
+                            rev_reads=rev_reads_gz, kbase_assy=True)
         cls.upload_assembly('intbasic_kbassy', {}, int_reads, kbase_assy=True)
+        cls.upload_assembly('intbasic_kbassy_gz', {}, int_reads_gz,
+                            kbase_assy=True)
         cls.upload_assembly('single_end', sq, fwd_reads, single_end=True)
+        cls.upload_assembly('single_end_gz', sq, fwd_reads_gz, single_end=True)
         cls.upload_assembly('single_end_kbassy', {}, rev_reads,
+                            single_end=True, kbase_assy=True)
+        cls.upload_assembly('single_end_kbassy_gz', {}, rev_reads_gz,
                             single_end=True, kbase_assy=True)
         shutil.copy2('data/small.forward.fq', 'data/small.forward.bad')
         bad_fn_reads = {'file': 'data/small.forward.bad',
@@ -499,6 +529,67 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                     self.STD_OBJ_KBA,
                     {'files': {'sing_gz': 'true'},
                      'ref': self.staged['single_end_kbassy']['ref'],
+                     'read_orientation_outward': 'false'
+                     })
+                },
+             'frbasic_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': True, 'rev': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'fwd_gz': 'true',
+                               'rev_gz': 'true'
+                               },
+                     'ref': self.staged['frbasic_gz']['ref']
+                     })
+                },
+             'frbasic_kbassy_gz': {
+                'md5': {'fwd': self.MD5_SM_F, 'rev': self.MD5_SM_R},
+                'gzp': {'fwd': True, 'rev': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'fwd_gz': 'true',
+                               'rev_gz': 'true'
+                               },
+                     'ref': self.staged['frbasic_kbassy_gz']['ref']
+                     })
+                },
+             'intbasic_gz': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'int_gz': 'true',
+                               },
+                     'ref': self.staged['intbasic_gz']['ref']
+                     })
+                },
+             'intbasic_kbassy_gz': {
+                'md5': {'int': self.MD5_SM_I},
+                'gzp': {'int': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'int_gz': 'true',
+                               },
+                     'ref': self.staged['intbasic_kbassy_gz']['ref']
+                     })
+                },
+             'single_end_gz': {
+                'md5': {'sing': self.MD5_SM_F},
+                'gzp': {'sing': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBF,
+                    {'files': {'sing_gz': 'true'},
+                     'ref': self.staged['single_end_gz']['ref']
+                     })
+                },
+             'single_end_kbassy_gz': {
+                'md5': {'sing': self.MD5_SM_R},
+                'gzp': {'sing': True},
+                'obj': dictmerge(
+                    self.STD_OBJ_KBA,
+                    {'files': {'sing_gz': 'true'},
+                     'ref': self.staged['single_end_kbassy_gz']['ref'],
                      'read_orientation_outward': 'false'
                      })
                 }
