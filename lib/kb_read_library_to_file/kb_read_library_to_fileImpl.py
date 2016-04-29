@@ -77,7 +77,6 @@ Operational notes:
 
     TRUE = 'true'
     FALSE = 'false'
-    UNKNOWN = None
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
@@ -252,15 +251,15 @@ Operational notes:
             else:
                 ret[sg] = self.FALSE
         else:
-            ret[sg] = self.UNKNOWN
+            ret[sg] = None
 
         roo = 'read_orientation_outward'
         if single:
-            ret[roo] = self.UNKNOWN
+            ret[roo] = None
         elif roo in data:
             ret[roo] = self.TRUE if data[roo] else self.FALSE
         else:
-            ret[roo] = self.FALSE if kbasefile else self.UNKNOWN
+            ret[roo] = self.FALSE if kbasefile else None
 
         # these fields are only possible in KBaseFile/Assy paired end, but the
         # logic is still fine for single end, will just force a null
