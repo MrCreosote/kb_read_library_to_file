@@ -61,7 +61,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "a23827489aedcf3396677650d6800917b75f372f"
+    GIT_COMMIT_HASH = "99cce782ced09edd3d8eee8eb5e116c1f806713d"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -307,8 +307,8 @@ Operational notes:
 
         ret = {}
         if interleave is not False:  # e.g. True or None
-            ret['int'], ret['int_gz'] = self.handle_gzip(
-                shockfile, gzip, isgz, self.get_file_prefix() + '.int.fastq')
+            ret['inter'], ret['inter_gz'] = self.handle_gzip(
+                shockfile, gzip, isgz, self.get_file_prefix() + '.inter.fastq')
         else:
             if isgz:
                 # we expect the job runner to clean up for us
@@ -345,12 +345,12 @@ Operational notes:
             if revisgz:
                 revshock = self.gunzip(revshock)
             intpath = os.path.join(self.scratch, self.get_file_prefix() +
-                                   '.int.fastq')
+                                   '.inter.fastq')
             self.interleave(fwdshock, revshock, intpath)
             if gzip:
                 intpath = self.gzip(intpath)
-            ret['int'] = intpath
-            ret['int_gz'] = self.bool_outgoing(gzip)
+            ret['inter'] = intpath
+            ret['inter_gz'] = self.bool_outgoing(gzip)
         else:
             ret['fwd'], ret['fwd_gz'] = self.handle_gzip(
                 fwdshock, gzip, fwdisgz, self.get_file_prefix() + '.fwd.fastq')
@@ -547,6 +547,8 @@ Operational notes:
             Parallelize - probably not worth it, this is all IO bound. Try if
                 there's nothing better to do. If so, each process/thread needs
                 its own shock_tmp folder.
+            Add user specified failure conditions - e.g. fail if is/is not
+                metagenome, outwards reads, etc.
         '''
 
         self.log('Running convert_read_library_to_file with params:\n' +
