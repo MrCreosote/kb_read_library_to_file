@@ -1740,6 +1740,79 @@ class kb_read_library_to_fileTest(unittest.TestCase):
              }
         )
 
+    def test_no_workspace_param(self):
+
+        self.run_error(
+            ['foo'], 'workspace_name parameter is required', wsname=None)
+
+    def test_no_workspace_name(self):
+
+        self.run_error(
+            ['foo'], 'workspace_name parameter is required', wsname='None')
+
+    def test_bad_workspace_name(self):
+
+        self.run_error(['foo'], 'Invalid workspace name bad|name',
+                       wsname='bad|name')
+
+    def test_non_extant_workspace(self):
+
+        self.run_error(
+            ['foo'], 'Object foo cannot be accessed: No workspace with name ' +
+            'Ireallyhopethisworkspacedoesntexistorthistestwillfail exists',
+            wsname='Ireallyhopethisworkspacedoesntexistorthistestwillfail',
+            exception=WorkspaceError)
+
+    def test_bad_lib_name(self):
+
+        self.run_error(['bad&name'], 'Invalid workspace object name bad&name')
+
+    def test_no_libs_param(self):
+
+        self.run_error(None, 'read_libraries parameter is required')
+
+    def test_no_libs_list(self):
+
+        self.run_error('foo', 'read_libraries must be a list')
+
+    def test_non_extant_lib(self):
+
+        self.run_error(
+            ['foo'], 'No object with name foo exists in workspace ' +
+            str(self.wsinfo[0]), exception=WorkspaceError)
+
+    def test_no_libs(self):
+
+        self.run_error([], 'At least one reads library must be provided')
+
+    def run_error(self, readnames, error, wsname=('fake'), gzip=None,
+                  interleave=None, exception=ValueError):
+
+        test_name = inspect.stack()[1][3]
+        print('\n****** starting expected fail test: ' + test_name + ' ******')
+
+        if wsname == ('fake'):
+            wsname = self.getWsName()
+
+        params = {'gzip': gzip,
+                  'interleave': interleave}
+        if (wsname is not None):
+            if wsname == 'None':
+                params['workspace_name'] = None
+            else:
+                params['workspace_name'] = wsname
+
+        if (readnames is not None):
+            params['read_libraries'] = readnames
+
+        print('Running test with {} libs. Params:'.format(
+            0 if not readnames else len(readnames)))
+        pprint(params)
+
+        with self.assertRaises(exception) as context:
+            self.getImpl().convert_read_library_to_file(self.ctx, params)
+        self.assertEqual(error, str(context.exception.message))
+
     def run_success(self, testspecs, gzip=None, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]
