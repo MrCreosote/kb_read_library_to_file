@@ -1596,6 +1596,31 @@ class kb_read_library_to_fileTest(unittest.TestCase):
              }, interleave='false', gzip='false'
         )
 
+    def test_object_contents_single_end_single_genome(self):
+        self.run_success(
+            {'kbfile_sing_sg_t': {
+                'md5': {'sing': self.MD5_SM_F},
+                'gzp': {'sing': False},
+                'obj': {'files': {'sing_gz': 'false'},
+                        'ref': self.staged['kbfile_sing_sg_t']['ref'],
+                        'single_genome': 'true',
+                        'strain': {u'genus': u'Yersinia',
+                                   u'species': u'pestis',
+                                   u'strain': u'happypants'
+                                   },
+                        'source': {u'source': u'my pants'},
+                        'sequencing_tech': u'IonTorrent',
+                        'read_count': 3,
+                        'read_size': 12,
+                        'gc_content': 2.3,
+                        'read_orientation_outward': None,
+                        'insert_size_mean': None,
+                        'insert_size_std_dev': None
+                        }
+                }
+             }
+        )
+
     def test_object_contents_single_end_metagenome(self):
         self.run_success(
             {'kbfile_sing_sg_f': {
@@ -1616,6 +1641,50 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                         'read_orientation_outward': None,
                         'insert_size_mean': None,
                         'insert_size_std_dev': None
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbassy_roo_true(self):
+        self.run_success(
+            {'kbassy_roo_t': {
+                'md5': {'int': self.MD5_SM_F},
+                'gzp': {'int': False},
+                'obj': {'files': {'int_gz': 'false'},
+                        'ref': self.staged['kbassy_roo_t']['ref'],
+                        'single_genome': None,
+                        'strain': None,
+                        'source': None,
+                        'sequencing_tech': None,
+                        'read_count': None,
+                        'read_size': None,
+                        'gc_content': None,
+                        'read_orientation_outward': 'true',
+                        'insert_size_mean': 42,
+                        'insert_size_std_dev': 1000000
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbassy_roo_false(self):
+        self.run_success(
+            {'kbassy_roo_f': {
+                'md5': {'int': self.MD5_SM_F},
+                'gzp': {'int': False},
+                'obj': {'files': {'int_gz': 'false'},
+                        'ref': self.staged['kbassy_roo_f']['ref'],
+                        'single_genome': None,
+                        'strain': None,
+                        'source': None,
+                        'sequencing_tech': None,
+                        'read_count': None,
+                        'read_size': None,
+                        'gc_content': None,
+                        'read_orientation_outward': 'false',
+                        'insert_size_mean': 43,
+                        'insert_size_std_dev': 1000001
                         }
                 }
              }

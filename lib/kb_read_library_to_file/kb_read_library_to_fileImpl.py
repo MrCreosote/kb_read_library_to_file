@@ -539,7 +539,6 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
-    
 
     def convert_read_library_to_file(self, ctx, params):
         # ctx is the context object
