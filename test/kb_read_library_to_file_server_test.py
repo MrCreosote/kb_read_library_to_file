@@ -10,6 +10,7 @@ from biokbase.workspace.client import Workspace as workspaceService  # @Unresolv
 from kb_read_library_to_file.kb_read_library_to_fileImpl import kb_read_library_to_file  # @IgnorePep8
 from biokbase.AbstractHandle.Client import AbstractHandle as HandleService  # @UnresolvedImport @IgnorePep8
 from kb_read_library_to_file.kb_read_library_to_fileImpl import ShockError
+from kb_read_library_to_file.kb_read_library_to_fileImpl import InvalidFileError  # @IgnorePep8
 from biokbase.workspace.client import ServerError as WorkspaceError  # @UnresolvedImport @IgnorePep8
 import shutil
 import requests
@@ -224,14 +225,16 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                                  }
 
     @classmethod
-    def upload_empty_data(cls):
-        cls.wsClient.save_objects({
+    def upload_empty_data(cls, wsobjname):
+        info = cls.wsClient.save_objects({
             'workspace': cls.getWsName(),
             'objects': [{'type': 'Empty.AType',
                          'data': {},
-                         'name': 'empty'
+                         'name': wsobjname
                          }]
-            })
+            })[0]
+        cls.staged[wsobjname] = {'info': info,
+                                 'ref': cls.make_ref(info)}
 
     @classmethod
     def gzip(cls, *files):
@@ -382,7 +385,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         cls.upload_assembly('bad_file_type', sq, bad_fn_reads)
         cls.upload_assembly('bad_node', sq, fwd_reads)
         cls.delete_shock_node(cls.nodes_to_delete.pop())
-        cls.upload_empty_data()
+        cls.upload_empty_data('empty')
         print('Data staged.')
 
     @classmethod
@@ -1784,6 +1787,70 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_no_libs(self):
 
         self.run_error([], 'At least one reads library must be provided')
+
+# TODO test gzip & interleave bad input
+# TODO test bad type in KBaseFile module
+
+    def test_bad_module(self):
+
+        self.run_error(['empty'],
+                       ('Invalid type for object {} (empty). Supported ' +
+                        'types: KBaseFile.SingleEndLibrary ' +
+                        'KBaseFile.PairedEndLibrary ' +
+                        'KBaseAssembly.SingleEndLibrary ' +
+                        'KBaseAssembly.PairedEndLibrary').format(
+                            self.staged['empty']['ref']))
+
+    def test_bad_shock_filename(self):
+
+        self.run_error(
+            ['bad_shk_name'],
+            ('Error downloading reads for object {} (bad_shk_name) from ' +
+             'Shock node {}: A valid file extension could not be determined ' +
+             'for the reads file. In order of precedence:\n' +
+             'File type is: \nHandle file name is: \n' +
+             'Shock file name is: small.forward.bad\n' +
+             'Acceptable extensions: .fq .fastq .fq.gz ' +
+             '.fastq.gz').format(self.staged['bad_shk_name']['ref'],
+                                 self.staged['bad_shk_name']['fwd_node_id']),
+            exception=InvalidFileError)
+
+    def test_bad_handle_filename(self):
+
+        self.run_error(
+            ['bad_file_name'],
+            ('Error downloading reads for object {} (bad_file_name) from ' +
+             'Shock node {}: A valid file extension could not be determined ' +
+             'for the reads file. In order of precedence:\n' +
+             'File type is: \nHandle file name is: file.terrible\n' +
+             'Shock file name is: small.forward.fq\n' +
+             'Acceptable extensions: .fq .fastq .fq.gz ' +
+             '.fastq.gz').format(self.staged['bad_file_name']['ref'],
+                                 self.staged['bad_file_name']['fwd_node_id']),
+            exception=InvalidFileError)
+
+    def test_bad_file_type(self):
+
+        self.run_error(
+            ['bad_file_type'],
+            ('Error downloading reads for object {} (bad_file_type) from ' +
+             'Shock node {}: A valid file extension could not be determined ' +
+             'for the reads file. In order of precedence:\n' +
+             'File type is: .xls\nHandle file name is: small.forward.fastq\n' +
+             'Shock file name is: small.forward.fq\n' +
+             'Acceptable extensions: .fq .fastq .fq.gz ' +
+             '.fastq.gz').format(self.staged['bad_file_type']['ref'],
+                                 self.staged['bad_file_type']['fwd_node_id']),
+            exception=InvalidFileError)
+
+    def test_bad_shock_node(self):
+
+        self.run_error(['bad_node'],
+                       ('Error downloading reads for object {} (bad_node) ' +
+                        'from shock node {}: Node not found').format(
+                            self.staged['bad_node']['ref'],
+                            self.staged['bad_node']['fwd_node_id']),
+                       exception=ShockError)
 
     def run_error(self, readnames, error, wsname=('fake'), gzip=None,
                   interleave=None, exception=ValueError):

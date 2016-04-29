@@ -16,6 +16,10 @@ import uuid
 
 class ShockError(Exception):
     pass
+
+class InvalidFileError(Exception):
+    pass
+
 #END_HEADER
 
 
@@ -147,15 +151,12 @@ Operational notes:
                     self.log(('Found acceptable file extension in {}: {}. ' +
                              'File {} gzipped.').format(
                         txt, fn, 'is' if gzipped else 'is not'))
-                    break
-                else:
-                    self.log('File extension from {}: {} is not acceptable'
-                             .format(txt, fn))
+                break
             else:
                 self.log('File extension cannot be determined from {}: {}'
                          .format(txt, fn))
         if not fileok:
-            raise ShockError(
+            raise InvalidFileError(
                 ('A valid file extension could not be determined for the ' +
                  'reads file. In order of precedence:\n' +
                  'File type is: {}\n' +
@@ -197,7 +198,7 @@ Operational notes:
                     types.append(mod + '.' + type_)
             raise ValueError(('Invalid type for object {} ({}). Supported ' +
                               'types: {}').format(obj_ref, obj_name,
-                                                  ','.join(types)))
+                                                  ' '.join(types)))
         return (type_name == self.SINGLE_END_TYPE,
                 module_name == self.KBASE_FILE)
 
@@ -290,9 +291,9 @@ Operational notes:
                             handle, gzip, interleave, file_type=None):
         try:
             shockfile, isgz = self.shock_download(token, handle, file_type)
-        except ShockError, e:
+        except InvalidFileError, e:
             e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
+                         'Shock node {}: {}').format(
                             source_obj_ref, source_obj_name, handle['id'],
                             e.message)
             raise
@@ -326,18 +327,18 @@ Operational notes:
         try:
             fwdshock, fwdisgz = self.shock_download(token, fwdhandle,
                                                     fwd_file_type)
-        except ShockError, e:
+        except InvalidFileError, e:
             e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
+                         'Shock node {}: {}').format(
                             source_obj_ref, source_obj_name, fwdhandle['id'],
                             e.message)
             raise
         try:
             revshock, revisgz = self.shock_download(token, revhandle,
                                                     rev_file_type)
-        except ShockError, e:
+        except InvalidFileError, e:
             e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
+                         'Shock node {}: {}').format(
                             source_obj_ref, source_obj_name, fwdhandle['id'],
                             e.message)
             raise
@@ -368,9 +369,9 @@ Operational notes:
                            handle, gzip, file_type=None):
         try:
             shockfile, isgz = self.shock_download(token, handle, file_type)
-        except ShockError, e:
+        except InvalidFileError, e:
             e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
+                         'Shock node {}: {}').format(
                             source_obj_ref, source_obj_name, handle['id'],
                             e.message)
             raise
