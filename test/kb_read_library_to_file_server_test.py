@@ -1804,8 +1804,6 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
         self.run_error([], 'At least one reads library must be provided')
 
-# TODO test gzip & interleave bad input
-
     def test_bad_module(self):
 
         self.run_error(['empty'],
