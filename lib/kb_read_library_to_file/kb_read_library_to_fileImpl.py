@@ -16,6 +16,11 @@ import uuid
 
 class ShockError(Exception):
     pass
+
+
+class InvalidFileError(Exception):
+    pass
+
 #END_HEADER
 
 
@@ -56,7 +61,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "065ca0e1c28c9c56218817491a2720a0f60a2365"
+    GIT_COMMIT_HASH = "a23827489aedcf3396677650d6800917b75f372f"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -77,7 +82,6 @@ Operational notes:
 
     TRUE = 'true'
     FALSE = 'false'
-    UNKNOWN = None
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
@@ -98,11 +102,17 @@ Operational notes:
 
     SHOCK_TEMP = 'shock_tmp'
 
-    def log(self, message):
-        print(message)
+    def log(self, message, prefix_newline=False):
+        print(('\n' if prefix_newline else '') +
+              str(time.time()) + ': ' + message)
 
     def file_extension_ok(self, filename):
-        return filename.lower().endswith(tuple(self.SUPPORTED_FILES))
+        for okext in self.SUPPORTED_FILES:
+            if filename.lower().endswith(okext):
+                if okext.endswith(self.GZIP):
+                    return okext, True
+                return okext, False
+        return None, None
 
     def check_shock_response(self, response):
         if not response.ok:
@@ -120,9 +130,7 @@ Operational notes:
         # downloads if 2 ws objects point to the same shock node, but that
         # seems rare enough that it's not worth the extra code complexity and
         # maintenance burden
-        self.log('Downloading from shock via handle:')
-        self.log(pformat(handle))
-        file_name = handle['id']
+        self.log('Downloading from shock via handle:\n' + pformat(handle))
 
         headers = {'Authorization': 'OAuth ' + token}
         node_url = handle['url'] + '/node/' + handle['id']
@@ -133,26 +141,25 @@ Operational notes:
 
         handle_fn = handle['file_name'] if 'file_name' in handle else None
 
-        print('File type: ' + str(file_type))
-        print('Handle fn: ' + str(handle_fn))
-        print('Shock fn: ' + str(node_fn))
-
         if file_type:
-            if not file_type.startswith('.'):
-                file_type = '.' + file_type
-            file_name += file_type
-            print('using file name via type: ' + file_name)
-        elif handle_fn:
-            file_name += '_' + handle_fn
-            print('using file name from handle: ' + file_name)
-        else:
-            file_name += '_' + node_fn
-            print('using file name from node: ' + file_name)
-
-        if not self.file_extension_ok(file_name):
-            raise ShockError(
-                ('A valid filename could not be determined for the reads ' +
-                 'file. In order of precedence:\n' +
+            file_type = ('' if file_type.startswith('.') else '.') + file_type
+        fileok = None
+        for txt, fn in zip(['file type', 'handle filename', 'shock filename'],
+                           [file_type, handle_fn, node_fn]):
+            if fn:
+                fileok, gzipped = self.file_extension_ok(fn)
+                if fileok:
+                    self.log(('Found acceptable file extension in {}: {}. ' +
+                             'File {} gzipped.').format(
+                        txt, fn, 'is' if gzipped else 'is not'))
+                break
+            else:
+                self.log('File extension cannot be determined from {}: {}'
+                         .format(txt, fn))
+        if not fileok:
+            raise InvalidFileError(
+                ('A valid file extension could not be determined for the ' +
+                 'reads file. In order of precedence:\n' +
                  'File type is: {}\n' +
                  'Handle file name is: {}\n' +
                  'Shock file name is: {}\n' +
@@ -160,7 +167,8 @@ Operational notes:
                     file_type, handle_fn, node_fn,
                     ' '.join(self.SUPPORTED_FILES)))
 
-        file_path = os.path.join(self.shock_temp, file_name)
+        file_path = os.path.join(self.shock_temp, handle['id'] +
+                                 (self.GZIP if gzipped else ''))
         with open(file_path, 'w') as fhandle:
             self.log('downloading reads file: ' + str(file_path))
             r = requests.get(node_url + '?download', stream=True,
@@ -170,8 +178,7 @@ Operational notes:
                 if not chunk:
                     break
                 fhandle.write(chunk)
-        self.log('done')
-        return file_path, file_path.lower().endswith(self.GZIP)
+        return file_path, gzipped
 
     def make_ref(self, object_info):
         return str(object_info[6]) + '/' + str(object_info[0]) + \
@@ -192,7 +199,7 @@ Operational notes:
                     types.append(mod + '.' + type_)
             raise ValueError(('Invalid type for object {} ({}). Supported ' +
                               'types: {}').format(obj_ref, obj_name,
-                                                  ','.join(types)))
+                                                  ' '.join(types)))
         return (type_name == self.SINGLE_END_TYPE,
                 module_name == self.KBASE_FILE)
 
@@ -200,11 +207,11 @@ Operational notes:
         target[field] = source.get(field)
 
     # this assumes that the FASTQ file is properly formatted, which it should
-    # be if it's in kbase. Credit:
+    # be if it's in KBase. Credit:
     # https://www.biostars.org/p/19446/#117160
     def deinterleave(self, filepath, fwdpath, revpath):
-        print('Deinterleaving file {} to files {} and {}'.format(
-              filepath, fwdpath, revpath))
+        self.log('Deinterleaving file {} to files {} and {}'.format(
+            filepath, fwdpath, revpath))
         with open(filepath, 'r') as s:
             with open(fwdpath, 'w') as f, open(revpath, 'w') as r:
                 for i, line in enumerate(s):
@@ -214,11 +221,11 @@ Operational notes:
                         r.write(line)
 
     # this assumes that the FASTQ files are properly formatted and matched,
-    # which they should be if they're in kbase. Credit:
+    # which they should be if they're in KBase. Credit:
     # https://sourceforge.net/p/denovoassembler/ray-testsuite/ci/master/tree/scripts/interleave-fastq.py
     def interleave(self, fwdpath, revpath, targetpath):
-        print('Interleaving files {} and {} to {}'.format(
-              fwdpath, revpath, targetpath))
+        self.log('Interleaving files {} and {} to {}'.format(
+            fwdpath, revpath, targetpath))
         with open(targetpath, 'w') as t:
             with open(fwdpath, 'r') as f, open(revpath, 'r') as r:
                 while True:
@@ -248,21 +255,15 @@ Operational notes:
             else:
                 ret[sg] = self.FALSE
         else:
-            ret[sg] = self.UNKNOWN
+            ret[sg] = None
 
         roo = 'read_orientation_outward'
         if single:
-            ret[roo] = self.FALSE
+            ret[roo] = None
         elif roo in data:
-            if data[roo]:
-                ret[roo] = self.TRUE
-            else:
-                ret[roo] = self.FALSE
+            ret[roo] = self.TRUE if data[roo] else self.FALSE
         else:
-            if kbasefile:
-                ret[roo] = self.FALSE
-            else:
-                ret[roo] = self.UNKNOWN
+            ret[roo] = self.FALSE if kbasefile else None
 
         # these fields are only possible in KBaseFile/Assy paired end, but the
         # logic is still fine for single end, will just force a null
@@ -284,19 +285,25 @@ Operational notes:
     def get_file_prefix(self):
         return os.path.join(self.scratch, str(uuid.uuid4()))
 
+    def get_shock_data_and_handle_errors(
+            self, source_obj_ref, source_obj_name, token, handle, file_type):
+        try:
+            return self.shock_download(token, handle, file_type)
+        except Exception, e:
+            e.message = ('Error downloading reads for object {} ({}) from ' +
+                         'Shock node {}: {}').format(
+                            source_obj_ref, source_obj_name, handle['id'],
+                            e.message)
+            raise
+
     # there's got to be better way to do this than these processing methods.
     # make some input classes for starters to fix these gross method sigs
 
     def process_interleaved(self, source_obj_ref, source_obj_name, token,
                             handle, gzip, interleave, file_type=None):
-        try:
-            shockfile, isgz = self.shock_download(token, handle, file_type)
-        except ShockError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, handle['id'],
-                            e.message)
-            raise
+
+        shockfile, isgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, handle, file_type)
 
         ret = {}
         if interleave is not False:  # e.g. True or None
@@ -324,24 +331,11 @@ Operational notes:
     def process_paired(self, source_obj_ref, source_obj_name, token,
                        fwdhandle, revhandle, gzip, interleave,
                        fwd_file_type=None, rev_file_type=None):
-        try:
-            fwdshock, fwdisgz = self.shock_download(token, fwdhandle,
-                                                    fwd_file_type)
-        except ShockError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, fwdhandle['id'],
-                            e.message)
-            raise
-        try:
-            revshock, revisgz = self.shock_download(token, revhandle,
-                                                    rev_file_type)
-        except ShockError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, fwdhandle['id'],
-                            e.message)
-            raise
+
+        fwdshock, fwdisgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, fwdhandle, fwd_file_type)
+        revshock, revisgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, revhandle, rev_file_type)
 
         ret = {}
         if interleave:
@@ -367,14 +361,9 @@ Operational notes:
 
     def process_single_end(self, source_obj_ref, source_obj_name, token,
                            handle, gzip, file_type=None):
-        try:
-            shockfile, isgz = self.shock_download(token, handle, file_type)
-        except ShockError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, handle['id'],
-                            e.message)
-            raise
+
+        shockfile, isgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, handle, file_type)
         f, iszip = self.handle_gzip(shockfile, gzip, isgz,
                                     self.get_file_prefix() + '.sing.fastq')
         return {'sing': f, 'sing_gz': iszip}
@@ -402,7 +391,7 @@ Operational notes:
         return prefix, self.bool_outgoing(zipped)
 
     def mv(self, oldfile, newfile):
-        print('Moving {} to {}'.format(oldfile, newfile))
+        self.log('Moving {} to {}'.format(oldfile, newfile))
         shutil.move(oldfile, newfile)
 
     def gzip(self, oldfile, newfile=None):
@@ -410,7 +399,7 @@ Operational notes:
             raise ValueError('File {} is already gzipped'.format(oldfile))
         if not newfile:
             newfile = oldfile + self.GZIP
-        print('gzipping {} to {}'.format(oldfile, newfile))
+        self.log('gzipping {} to {}'.format(oldfile, newfile))
         with open(oldfile, 'rb') as s, gzip.open(newfile, 'wb') as t:
             shutil.copyfileobj(s, t)
         return newfile
@@ -420,7 +409,7 @@ Operational notes:
             raise ValueError('File {} is not gzipped'.format(oldfile))
         if not newfile:
             newfile = oldfile[: -len(self.GZIP)]
-        print('gunzipping {} to {}'.format(oldfile, newfile))
+        self.log('gunzipping {} to {}'.format(oldfile, newfile))
         with gzip.open(oldfile, 'rb') as s, open(newfile, 'wb') as t:
             shutil.copyfileobj(s, t)
         return newfile
@@ -445,6 +434,7 @@ Operational notes:
         ret = self.set_up_reads_return(single, kbasefile, reads)
         obj_name = info[1]
         ref = ret['ref']
+        self.log('Type: ' + info[2])
 
         # lib1 = KBaseFile, handle_1 = KBaseAssembly
         if kbasefile:
@@ -471,7 +461,7 @@ Operational notes:
                 ret['files'] = self.process_single_end(
                     ref, obj_name, token, data['handle'], gzip)
             else:
-                if 'handle2' in data:  # not interleaved
+                if 'handle_2' in data:  # not interleaved
                     ret['files'] = self.process_paired(
                         ref, obj_name, token, data['handle_1'],
                         data['handle_2'], gzip, interleave)
@@ -490,7 +480,8 @@ Operational notes:
         elif params[boolname] == 'false':
             params[boolname] = False
         else:
-            raise ValueError('Illegal value for ternary parameter {}: {}'
+            raise ValueError(('Illegal value for ternary parameter {}: {}. ' +
+                              'Allowed values are "true", "false", and null.')
                              .format(boolname, params[boolname]))
 
     def process_params(self, params):
@@ -554,17 +545,17 @@ Operational notes:
                 the reads files that return. Race conditions possible though.
                 Probably better to add flag to get_objects.
             Parallelize - probably not worth it, this is all IO bound. Try if
-                there's nothing better to do.
+                there's nothing better to do. If so, each process/thread needs
+                its own shock_tmp folder.
         '''
 
-        # TODO tests - run through all logic
-        self.log('Running convert_read_library_to_file with params:')
-        self.log(pformat(params))
+        self.log('Running convert_read_library_to_file with params:\n' +
+                 pformat(params))
 
         token = ctx['token']
 
         self.process_params(params)
-#         self.log(pformat(params))
+#         self.log('\n' + pformat(params))
 
         # Get the reads library
         ws = workspaceService(self.workspaceURL, token=token)
@@ -575,13 +566,13 @@ Operational notes:
         try:
             reads = ws.get_objects(ws_reads_ids)
         except WorkspaceException, e:
-            print('Logging stacktrace from workspace exception at epoch {}:'
-                  .format(time.time()))
-            print(e.data)
+            self.log('Logging stacktrace from workspace exception:\n' + e.data)
             raise
 
         output = {}
         for read_name, read in zip(params[self.PARAM_IN_LIB], reads):
+            self.log('=== processing read library ' + read_name + '===\n',
+                     prefix_newline=True)
             output[read_name] = self.process_reads(
                 read, params[self.PARAM_IN_GZIP],
                 params[self.PARAM_IN_INTERLEAVED], token)

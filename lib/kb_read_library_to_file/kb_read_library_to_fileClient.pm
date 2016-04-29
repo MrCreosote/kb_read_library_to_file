@@ -594,8 +594,7 @@ string ref - the workspace reference of the reads file, e.g
 tern single_genome - whether the reads are from a single genome or a
     metagenome. null if unknown.
 tern read_orientation_outward - whether the read orientation is outward
-    from the set of primers. Always false for singled ended reads. null
-    if unknown.
+    from the set of primers. null if unknown or single ended reads.
 string sequencing_tech - the sequencing technology used to produce the
     reads. null if unknown.
 KBaseCommon.StrainInfo strain - information about the organism strain
