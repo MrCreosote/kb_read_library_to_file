@@ -17,6 +17,7 @@ import uuid
 class ShockError(Exception):
     pass
 
+
 class InvalidFileError(Exception):
     pass
 
@@ -206,7 +207,7 @@ Operational notes:
         target[field] = source.get(field)
 
     # this assumes that the FASTQ file is properly formatted, which it should
-    # be if it's in kbase. Credit:
+    # be if it's in KBase. Credit:
     # https://www.biostars.org/p/19446/#117160
     def deinterleave(self, filepath, fwdpath, revpath):
         self.log('Deinterleaving file {} to files {} and {}'.format(
@@ -220,7 +221,7 @@ Operational notes:
                         r.write(line)
 
     # this assumes that the FASTQ files are properly formatted and matched,
-    # which they should be if they're in kbase. Credit:
+    # which they should be if they're in KBase. Credit:
     # https://sourceforge.net/p/denovoassembler/ray-testsuite/ci/master/tree/scripts/interleave-fastq.py
     def interleave(self, fwdpath, revpath, targetpath):
         self.log('Interleaving files {} and {} to {}'.format(
@@ -548,7 +549,6 @@ Operational notes:
                 its own shock_tmp folder.
         '''
 
-        # TODO tests - run through all logic
         self.log('Running convert_read_library_to_file with params:\n' +
                  pformat(params))
 
@@ -566,7 +566,7 @@ Operational notes:
         try:
             reads = ws.get_objects(ws_reads_ids)
         except WorkspaceException, e:
-            self.log('Logging stacktrace from workspace exception\n:' + e.data)
+            self.log('Logging stacktrace from workspace exception:\n' + e.data)
             raise
 
         output = {}

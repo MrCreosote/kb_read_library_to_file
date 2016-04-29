@@ -1877,6 +1877,19 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                             self.staged['bad_node']['fwd_node_id']),
                        exception=ShockError)
 
+    def test_invalid_gzip_input(self):
+
+        self.run_error(
+            ['foo'], 'Illegal value for ternary parameter gzip: foofoo. ' +
+            'Allowed values are "true", "false", and null.', gzip='foofoo')
+
+    def test_invalid_interleave_input(self):
+
+        self.run_error(
+            ['foo'], 'Illegal value for ternary parameter interleaved: ' +
+            'wubba. Allowed values are "true", "false", and null.',
+            interleave='wubba')
+
     def run_error(self, readnames, error, wsname=('fake'), gzip=None,
                   interleave=None, exception=ValueError):
 
@@ -1887,7 +1900,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             wsname = self.getWsName()
 
         params = {'gzip': gzip,
-                  'interleave': interleave}
+                  'interleaved': interleave}
         if (wsname is not None):
             if wsname == 'None':
                 params['workspace_name'] = None
