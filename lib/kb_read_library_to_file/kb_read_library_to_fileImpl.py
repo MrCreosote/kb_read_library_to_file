@@ -136,6 +136,8 @@ Operational notes:
 
         handle_fn = handle['file_name'] if 'file_name' in handle else None
 
+        if file_type:
+            file_type = ('' if file_type.startswith('.') else '.') + file_type
         fileok = None
         for txt, fn in zip(['file type', 'handle filename', 'shock filename'],
                            [file_type, handle_fn, node_fn]):
