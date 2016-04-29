@@ -284,19 +284,25 @@ Operational notes:
     def get_file_prefix(self):
         return os.path.join(self.scratch, str(uuid.uuid4()))
 
-    # there's got to be better way to do this than these processing methods.
-    # make some input classes for starters to fix these gross method sigs
-
-    def process_interleaved(self, source_obj_ref, source_obj_name, token,
-                            handle, gzip, interleave, file_type=None):
+    def get_shock_data_and_handle_errors(
+            self, source_obj_ref, source_obj_name, token, handle, file_type):
         try:
-            shockfile, isgz = self.shock_download(token, handle, file_type)
-        except InvalidFileError, e:
+            return self.shock_download(token, handle, file_type)
+        except Exception, e:
             e.message = ('Error downloading reads for object {} ({}) from ' +
                          'Shock node {}: {}').format(
                             source_obj_ref, source_obj_name, handle['id'],
                             e.message)
             raise
+
+    # there's got to be better way to do this than these processing methods.
+    # make some input classes for starters to fix these gross method sigs
+
+    def process_interleaved(self, source_obj_ref, source_obj_name, token,
+                            handle, gzip, interleave, file_type=None):
+
+        shockfile, isgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, handle, file_type)
 
         ret = {}
         if interleave is not False:  # e.g. True or None
@@ -324,24 +330,11 @@ Operational notes:
     def process_paired(self, source_obj_ref, source_obj_name, token,
                        fwdhandle, revhandle, gzip, interleave,
                        fwd_file_type=None, rev_file_type=None):
-        try:
-            fwdshock, fwdisgz = self.shock_download(token, fwdhandle,
-                                                    fwd_file_type)
-        except InvalidFileError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'Shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, fwdhandle['id'],
-                            e.message)
-            raise
-        try:
-            revshock, revisgz = self.shock_download(token, revhandle,
-                                                    rev_file_type)
-        except InvalidFileError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'Shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, fwdhandle['id'],
-                            e.message)
-            raise
+
+        fwdshock, fwdisgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, fwdhandle, fwd_file_type)
+        revshock, revisgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, revhandle, rev_file_type)
 
         ret = {}
         if interleave:
@@ -367,14 +360,9 @@ Operational notes:
 
     def process_single_end(self, source_obj_ref, source_obj_name, token,
                            handle, gzip, file_type=None):
-        try:
-            shockfile, isgz = self.shock_download(token, handle, file_type)
-        except InvalidFileError, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'Shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, handle['id'],
-                            e.message)
-            raise
+
+        shockfile, isgz = self.get_shock_data_and_handle_errors(
+            source_obj_ref, source_obj_name, token, handle, file_type)
         f, iszip = self.handle_gzip(shockfile, gzip, isgz,
                                     self.get_file_prefix() + '.sing.fastq')
         return {'sing': f, 'sing_gz': iszip}

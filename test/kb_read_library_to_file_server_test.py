@@ -206,15 +206,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      }
 
         print('Saving object data')
-        objdata = cls.wsClient.save_objects({
-            'workspace': cls.getWsName(),
-            'objects': [
-                        {
-                         'type': wstype,
-                         'data': ob,
-                         'name': wsobjname
-                         }]
-            })[0]
+        objdata = cls.save_ws_obj(ob, wsobjname, wstype)
         print('Saved object: ')
         pprint(objdata)
         pprint(ob)
@@ -225,16 +217,39 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                                  }
 
     @classmethod
-    def upload_empty_data(cls, wsobjname):
-        info = cls.wsClient.save_objects({
-            'workspace': cls.getWsName(),
-            'objects': [{'type': 'Empty.AType',
-                         'data': {},
-                         'name': wsobjname
-                         }]
-            })[0]
+    def upload_file_ref(cls, wsobjname, file_):
+        fwd_id, fwd_handle_id, fwd_md5, fwd_size = \
+            cls.upload_file_to_shock_and_get_handle(file_)
+        ob = {'file': {'hid': fwd_handle_id,
+                       'file_name': file_,
+                       'id': fwd_id,
+                       'url': cls.shockURL,
+                       'type': 'shock',
+                       'remote_md5': fwd_md5
+                       },
+              'encoding': 'UTF8',
+              'type': 'stuff',
+              'size': fwd_size
+              }
+        info = cls.save_ws_obj(ob, wsobjname, 'KBaseFile.FileRef')
         cls.staged[wsobjname] = {'info': info,
                                  'ref': cls.make_ref(info)}
+
+    @classmethod
+    def upload_empty_data(cls, wsobjname):
+        info = cls.save_ws_obj({}, wsobjname, 'Empty.AType')
+        cls.staged[wsobjname] = {'info': info,
+                                 'ref': cls.make_ref(info)}
+
+    @classmethod
+    def save_ws_obj(cls, obj, objname, objtype):
+        return cls.wsClient.save_objects({
+            'workspace': cls.getWsName(),
+            'objects': [{'type': objtype,
+                         'data': obj,
+                         'name': objname
+                         }]
+            })[0]
 
     @classmethod
     def gzip(cls, *files):
@@ -386,6 +401,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         cls.upload_assembly('bad_node', sq, fwd_reads)
         cls.delete_shock_node(cls.nodes_to_delete.pop())
         cls.upload_empty_data('empty')
+        cls.upload_file_ref('fileref', 'data/small.forward.fq')
         print('Data staged.')
 
     @classmethod
@@ -1789,7 +1805,6 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         self.run_error([], 'At least one reads library must be provided')
 
 # TODO test gzip & interleave bad input
-# TODO test bad type in KBaseFile module
 
     def test_bad_module(self):
 
@@ -1800,6 +1815,16 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                         'KBaseAssembly.SingleEndLibrary ' +
                         'KBaseAssembly.PairedEndLibrary').format(
                             self.staged['empty']['ref']))
+
+    def test_bad_type(self):
+
+        self.run_error(['fileref'],
+                       ('Invalid type for object {} (fileref). Supported ' +
+                        'types: KBaseFile.SingleEndLibrary ' +
+                        'KBaseFile.PairedEndLibrary ' +
+                        'KBaseAssembly.SingleEndLibrary ' +
+                        'KBaseAssembly.PairedEndLibrary').format(
+                            self.staged['fileref']['ref']))
 
     def test_bad_shock_filename(self):
 
@@ -1847,7 +1872,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
         self.run_error(['bad_node'],
                        ('Error downloading reads for object {} (bad_node) ' +
-                        'from shock node {}: Node not found').format(
+                        'from Shock node {}: Node not found').format(
                             self.staged['bad_node']['ref'],
                             self.staged['bad_node']['fwd_node_id']),
                        exception=ShockError)
