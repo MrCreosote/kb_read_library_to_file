@@ -477,11 +477,11 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
@@ -582,41 +582,41 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_interleaved(self):
         self.run_success(
             {'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
                 },
              'intbasic_kbassy': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
                 },
              'intbasic_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
                 },
              'intbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
@@ -649,21 +649,21 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
                 },
              'intbasic_kbassy': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
@@ -709,21 +709,21 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'intbasic_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
                 },
              'intbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
@@ -774,21 +774,21 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
                 },
              'intbasic_kbassy': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
@@ -834,21 +834,21 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'intbasic_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
                 },
              'intbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
@@ -877,40 +877,40 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_fr_to_interleave(self):
         self.run_success(
             {'frbasic': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
                 },
              'frbasic_kbassy': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false'},
+                    {'files': {'inter_gz': 'false'},
                      'ref': self.staged['frbasic_kbassy']['ref']
                      })
                 },
              'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
                 },
              'intbasic_kbassy': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
@@ -934,39 +934,39 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'frbasic_gz': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false'},
+                    {'files': {'inter_gz': 'false'},
                      'ref': self.staged['frbasic_gz']['ref']
                      })
                 },
              'frbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false'},
+                    {'files': {'inter_gz': 'false'},
                      'ref': self.staged['frbasic_kbassy_gz']['ref']
                      })
                 },
              'intbasic_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
                 },
              'intbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
@@ -995,40 +995,40 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_fr_to_interleave_and_gzip(self):
         self.run_success(
             {'frbasic': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
                 },
              'frbasic_kbassy': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true'},
+                    {'files': {'inter_gz': 'true'},
                      'ref': self.staged['frbasic_kbassy']['ref']
                      })
                 },
              'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
                 },
              'intbasic_kbassy': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
@@ -1052,39 +1052,39 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'frbasic_gz': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true'},
+                    {'files': {'inter_gz': 'true'},
                      'ref': self.staged['frbasic_gz']['ref']
                      })
                 },
              'frbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true'},
+                    {'files': {'inter_gz': 'true'},
                      'ref': self.staged['frbasic_kbassy_gz']['ref']
                      })
                 },
              'intbasic_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
                 },
              'intbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': True},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': True},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'true',
+                    {'files': {'inter_gz': 'true',
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
@@ -1113,40 +1113,40 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_fr_to_interleave_and_ungzip(self):
         self.run_success(
             {'frbasic': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['frbasic']['ref']
                      })
                 },
              'frbasic_kbassy': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false'},
+                    {'files': {'inter_gz': 'false'},
                      'ref': self.staged['frbasic_kbassy']['ref']
                      })
                 },
              'intbasic': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic']['ref']
                      })
                 },
              'intbasic_kbassy': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy']['ref']
                      })
@@ -1170,39 +1170,39 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                      })
                 },
              'frbasic_gz': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false'},
+                    {'files': {'inter_gz': 'false'},
                      'ref': self.staged['frbasic_gz']['ref']
                      })
                 },
              'frbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_FR_TO_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_FR_TO_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false'},
+                    {'files': {'inter_gz': 'false'},
                      'ref': self.staged['frbasic_kbassy_gz']['ref']
                      })
                 },
              'intbasic_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBF_P,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_gz']['ref']
                      })
                 },
              'intbasic_kbassy_gz': {
-                'md5': {'int': self.MD5_SM_I},
-                'gzp': {'int': False},
+                'md5': {'inter': self.MD5_SM_I},
+                'gzp': {'inter': False},
                 'obj': dictmerge(
                     self.STD_OBJ_KBA,
-                    {'files': {'int_gz': 'false',
+                    {'files': {'inter_gz': 'false',
                                },
                      'ref': self.staged['intbasic_kbassy_gz']['ref']
                      })
@@ -1668,9 +1668,9 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_object_contents_kbassy_roo_true(self):
         self.run_success(
             {'kbassy_roo_t': {
-                'md5': {'int': self.MD5_SM_F},
-                'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false'},
+                'md5': {'inter': self.MD5_SM_F},
+                'gzp': {'inter': False},
+                'obj': {'files': {'inter_gz': 'false'},
                         'ref': self.staged['kbassy_roo_t']['ref'],
                         'single_genome': None,
                         'strain': None,
@@ -1690,9 +1690,9 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_object_contents_kbassy_roo_false(self):
         self.run_success(
             {'kbassy_roo_f': {
-                'md5': {'int': self.MD5_SM_F},
-                'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false'},
+                'md5': {'inter': self.MD5_SM_F},
+                'gzp': {'inter': False},
+                'obj': {'files': {'inter_gz': 'false'},
                         'ref': self.staged['kbassy_roo_f']['ref'],
                         'single_genome': None,
                         'strain': None,
@@ -1712,9 +1712,9 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_object_contents_kbfile_true(self):
         self.run_success(
             {'kbfile_pe_t': {
-                'md5': {'int': self.MD5_SM_F},
-                'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false'},
+                'md5': {'inter': self.MD5_SM_F},
+                'gzp': {'inter': False},
+                'obj': {'files': {'inter_gz': 'false'},
                         'ref': self.staged['kbfile_pe_t']['ref'],
                         'single_genome': 'true',
                         'strain': {u'genus': u'Bacillus',
@@ -1737,9 +1737,9 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_object_contents_kbfile_false(self):
         self.run_success(
             {'kbfile_pe_f': {
-                'md5': {'int': self.MD5_SM_F},
-                'gzp': {'int': False},
-                'obj': {'files': {'int_gz': 'false'},
+                'md5': {'inter': self.MD5_SM_F},
+                'gzp': {'inter': False},
+                'obj': {'files': {'inter_gz': 'false'},
                         'ref': self.staged['kbfile_pe_f']['ref'],
                         'single_genome': 'false',
                         'strain': {u'genus': u'Escheria',
