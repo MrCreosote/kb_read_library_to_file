@@ -1690,6 +1690,56 @@ class kb_read_library_to_fileTest(unittest.TestCase):
              }
         )
 
+    def test_object_contents_kbfile_true(self):
+        self.run_success(
+            {'kbfile_pe_t': {
+                'md5': {'int': self.MD5_SM_F},
+                'gzp': {'int': False},
+                'obj': {'files': {'int_gz': 'false'},
+                        'ref': self.staged['kbfile_pe_t']['ref'],
+                        'single_genome': 'true',
+                        'strain': {u'genus': u'Bacillus',
+                                   u'species': u'subtilis',
+                                   u'strain': u'soilpants'
+                                   },
+                        'source': {u'source': u'my other pants'},
+                        'sequencing_tech': 'Sanger',
+                        'read_count': 5,
+                        'read_size': 14,
+                        'gc_content': 2.5,
+                        'read_orientation_outward': 'true',
+                        'insert_size_mean': 50,
+                        'insert_size_std_dev': 1000002
+                        }
+                }
+             }
+        )
+
+    def test_object_contents_kbfile_false(self):
+        self.run_success(
+            {'kbfile_pe_f': {
+                'md5': {'int': self.MD5_SM_F},
+                'gzp': {'int': False},
+                'obj': {'files': {'int_gz': 'false'},
+                        'ref': self.staged['kbfile_pe_f']['ref'],
+                        'single_genome': 'false',
+                        'strain': {u'genus': u'Escheria',
+                                   u'species': u'coli',
+                                   u'strain': u'poopypants'
+                                   },
+                        'source': {u'source': u'my ex-pants'},
+                        'sequencing_tech': 'PacBio CLR',
+                        'read_count': 6,
+                        'read_size': 15,
+                        'gc_content': 2.6,
+                        'read_orientation_outward': 'false',
+                        'insert_size_mean': 51,
+                        'insert_size_std_dev': 1000003
+                        }
+                }
+             }
+        )
+
     def run_success(self, testspecs, gzip=None, interleave=None):
         self.maxDiff = None
         test_name = inspect.stack()[1][3]
