@@ -289,11 +289,14 @@ Operational notes:
             self, source_obj_ref, source_obj_name, token, handle, file_type):
         try:
             return self.shock_download(token, handle, file_type)
-        except Exception, e:
-            e.message = ('Error downloading reads for object {} ({}) from ' +
-                         'Shock node {}: {}').format(
-                            source_obj_ref, source_obj_name, handle['id'],
-                            e.message)
+        except (ShockError, InvalidFileError) as e:
+            msg = ('Error downloading reads for object {} ({}) from ' +
+                   'Shock node {}: ').format(
+                   source_obj_ref, source_obj_name, handle['id'])
+            e.args = (msg + e.args[0],) + e.args[1:]
+            # py 3 exceptions have no message field
+            if hasattr(e, 'message'):  # changing args doesn't change message
+                e.message = msg + e.message
             raise
 
     # there's got to be better way to do this than these processing methods.
@@ -567,7 +570,7 @@ Operational notes:
                                  read_name})
         try:
             reads = ws.get_objects(ws_reads_ids)
-        except WorkspaceException, e:
+        except WorkspaceException as e:
             self.log('Logging stacktrace from workspace exception:\n' + e.data)
             raise
 
