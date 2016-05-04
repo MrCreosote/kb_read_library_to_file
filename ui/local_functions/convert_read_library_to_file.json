@@ -7,7 +7,7 @@
     "tags" : {
         "categories" : [],
         "input": {
-            "file_types": ["powerpoint"],
+            "file_types": [],
             "kb_types": ["KBaseAssembly.PairedEndReads","KBaseFile.PairedEndReads"]
         },
         "output": {
