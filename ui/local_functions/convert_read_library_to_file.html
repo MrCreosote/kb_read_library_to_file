@@ -1,0 +1,32 @@
+
+<p>This is how you use it:</p>
+
+<pre>
+        gc = GenericClient(self.generic_clientURL, use_url_lookup=False,
+                           token=token)
+        reads_params = {self.PARAM_IN_WS: params[self.PARAM_IN_WS],
+                        self.PARAM_IN_LIB: params[self.PARAM_IN_LIB]}
+
+        typeerr = ('Supported types: KBaseFile.SingleEndLibrary ' +
+                   'KBaseFile.PairedEndLibrary ' +
+                   'KBaseAssembly.SingleEndLibrary ' +
+                   'KBaseAssembly.PairedEndLibrary')
+        try:
+            reads = gc.sync_call(
+                "kb_read_library_to_file.convert_read_library_to_file",
+                [reads_params], json_rpc_context={"service_ver": "dev"}
+                )[0]['files']
+        except ServerError as se:
+            self.log('logging stacktrace from Generic Client error')
+            self.log(se.data)
+            if typeerr in se.message:
+                prefix = se.message.split('.')[0]
+                raise ValueError(
+                    prefix + '. Only the types ' +
+                    'KBaseAssembly.PairedEndLibrary ' +
+                    'and KBaseFile.PairedEndLibrary are supported')
+            else:
+                raise
+</pre>
+
+
