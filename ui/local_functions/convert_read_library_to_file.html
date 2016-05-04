@@ -1,32 +1,37 @@
 
-<p>This is how you use it:</p>
+<p>Example python usage:</p>
 
 <pre>
+    def __init__(self, config):
+        #BEGIN_CONSTRUCTOR
+        self.generic_clientURL = os.environ['SDK_CALLBACK_URL']
+        ...
+
+    def my_method(self):
+
+        ...
         gc = GenericClient(self.generic_clientURL, use_url_lookup=False,
                            token=token)
-        reads_params = {self.PARAM_IN_WS: params[self.PARAM_IN_WS],
-                        self.PARAM_IN_LIB: params[self.PARAM_IN_LIB]}
+        reads_params = {'read_libraries': [library1, library2],
+                        'workspace_name': 'my_workspace',
+                        'gzip': 'false',
+                        'interleaved': None}
 
-        typeerr = ('Supported types: KBaseFile.SingleEndLibrary ' +
-                   'KBaseFile.PairedEndLibrary ' +
-                   'KBaseAssembly.SingleEndLibrary ' +
-                   'KBaseAssembly.PairedEndLibrary')
         try:
             reads = gc.sync_call(
-                "kb_read_library_to_file.convert_read_library_to_file",
-                [reads_params], json_rpc_context={"service_ver": "dev"}
-                )[0]['files']
+                'kb_read_library_to_file.convert_read_library_to_file',
+                [reads_params],
+                # change service_ver to beta or prod as appropriate
+                json_rpc_context={'service_ver': 'dev'}
+                )[0]
         except ServerError as se:
             self.log('logging stacktrace from Generic Client error')
             self.log(se.data)
-            if typeerr in se.message:
-                prefix = se.message.split('.')[0]
-                raise ValueError(
-                    prefix + '. Only the types ' +
-                    'KBaseAssembly.PairedEndLibrary ' +
-                    'and KBaseFile.PairedEndLibrary are supported')
-            else:
-                raise
+            raise
+        ...
 </pre>
 
+<p> The reads object will contain filepaths for the reads files and the
+available data from the workspace objects for those files as per the method
+specification.<p>
 
