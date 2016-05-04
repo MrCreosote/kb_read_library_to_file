@@ -21,7 +21,7 @@
             reads = gc.sync_call(
                 'kb_read_library_to_file.convert_read_library_to_file',
                 [reads_params],
-                # change service_ver to beta or prod as appropriate
+                # change service_ver to beta or release as appropriate
                 json_rpc_context={'service_ver': 'dev'}
                 )[0]
         except ServerError as se:
