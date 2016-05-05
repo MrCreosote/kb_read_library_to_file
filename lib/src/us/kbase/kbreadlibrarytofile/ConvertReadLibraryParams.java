@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "workspace_name",
     "read_libraries",
     "gzip",
-    "interlaced"
+    "interleaved"
 })
 public class ConvertReadLibraryParams {
 
@@ -46,8 +46,8 @@ public class ConvertReadLibraryParams {
     private List<String> readLibraries;
     @JsonProperty("gzip")
     private java.lang.String gzip;
-    @JsonProperty("interlaced")
-    private java.lang.String interlaced;
+    @JsonProperty("interleaved")
+    private java.lang.String interleaved;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("workspace_name")
@@ -95,18 +95,18 @@ public class ConvertReadLibraryParams {
         return this;
     }
 
-    @JsonProperty("interlaced")
-    public java.lang.String getInterlaced() {
-        return interlaced;
+    @JsonProperty("interleaved")
+    public java.lang.String getInterleaved() {
+        return interleaved;
     }
 
-    @JsonProperty("interlaced")
-    public void setInterlaced(java.lang.String interlaced) {
-        this.interlaced = interlaced;
+    @JsonProperty("interleaved")
+    public void setInterleaved(java.lang.String interleaved) {
+        this.interleaved = interleaved;
     }
 
-    public ConvertReadLibraryParams withInterlaced(java.lang.String interlaced) {
-        this.interlaced = interlaced;
+    public ConvertReadLibraryParams withInterleaved(java.lang.String interleaved) {
+        this.interleaved = interleaved;
         return this;
     }
 
@@ -122,7 +122,7 @@ public class ConvertReadLibraryParams {
 
     @Override
     public java.lang.String toString() {
-        return ((((((((((("ConvertReadLibraryParams"+" [workspaceName=")+ workspaceName)+", readLibraries=")+ readLibraries)+", gzip=")+ gzip)+", interlaced=")+ interlaced)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((("ConvertReadLibraryParams"+" [workspaceName=")+ workspaceName)+", readLibraries=")+ readLibraries)+", gzip=")+ gzip)+", interleaved=")+ interleaved)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

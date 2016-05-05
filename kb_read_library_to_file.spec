@@ -57,7 +57,7 @@ module kb_read_library_to_file {
         string workspace_name;
         list<read_lib> read_libraries;
         tern gzip;
-        tern interlaced;
+        tern interleaved;
     } ConvertReadLibraryParams;
     
     /* Reads file locations and gzip status.

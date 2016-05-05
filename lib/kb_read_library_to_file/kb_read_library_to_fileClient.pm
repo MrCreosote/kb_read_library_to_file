@@ -146,7 +146,7 @@ ConvertReadLibraryParams is a reference to a hash where the following keys are d
 	workspace_name has a value which is a string
 	read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
 	gzip has a value which is a kb_read_library_to_file.tern
-	interlaced has a value which is a kb_read_library_to_file.tern
+	interleaved has a value which is a kb_read_library_to_file.tern
 read_lib is a string
 tern is a string
 ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
@@ -208,7 +208,7 @@ ConvertReadLibraryParams is a reference to a hash where the following keys are d
 	workspace_name has a value which is a string
 	read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
 	gzip has a value which is a kb_read_library_to_file.tern
-	interlaced has a value which is a kb_read_library_to_file.tern
+	interleaved has a value which is a kb_read_library_to_file.tern
 read_lib is a string
 tern is a string
 ConvertReadLibraryOutput is a reference to a hash where the following keys are defined:
@@ -500,7 +500,7 @@ a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
 read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
 gzip has a value which is a kb_read_library_to_file.tern
-interlaced has a value which is a kb_read_library_to_file.tern
+interleaved has a value which is a kb_read_library_to_file.tern
 
 </pre>
 
@@ -512,7 +512,7 @@ a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
 read_libraries has a value which is a reference to a list where each element is a kb_read_library_to_file.read_lib
 gzip has a value which is a kb_read_library_to_file.tern
-interlaced has a value which is a kb_read_library_to_file.tern
+interleaved has a value which is a kb_read_library_to_file.tern
 
 
 =end text
