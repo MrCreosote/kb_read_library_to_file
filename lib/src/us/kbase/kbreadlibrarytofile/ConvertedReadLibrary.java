@@ -18,7 +18,7 @@ import us.kbase.kbasecommon.StrainInfo;
  * <pre>
  * Information about each set of reads.
  * ReadsFiles files - the reads files.
- * string ref - the workspace reference of the reads file, e.g
+ * string ref - the absolute workspace reference of the reads file, e.g
  *     workspace_id/object_id/version.
  * tern single_genome - whether the reads are from a single genome or a
  *     metagenome. null if unknown.

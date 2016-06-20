@@ -36,33 +36,36 @@ class kb_read_library_to_file(object):
         """
         Convert read libraries to files
         :param params: instance of type "ConvertReadLibraryParams" (Input
-           parameters for converting libraries to files. string
-           workspace_name - the name of the workspace from which to take
-           input. list<read_lib> read_libraries - the names of the workspace
-           read library objects to convert. tern gzip - if true, gzip any
-           unzipped files. If false, gunzip any zipped files. If null or
-           missing, leave files as is unless unzipping is required for
-           interleaving or deinterleaving, in which case the files will be
-           left unzipped. tern interleaved - if true, provide the files in
-           interleaved format if they are not already. If false, provide
-           forward and reverse reads files. If null or missing, leave files
-           as is.) -> structure: parameter "workspace_name" of String,
-           parameter "read_libraries" of list of type "read_lib" (The
-           workspace object name of a read library, whether of the
-           KBaseAssembly or KBaseFile type.), parameter "gzip" of type "tern"
-           (A ternary. Allowed values are 'false', 'true', or null. Any other
-           value is invalid.), parameter "interleaved" of type "tern" (A
-           ternary. Allowed values are 'false', 'true', or null. Any other
-           value is invalid.)
+           parameters for converting libraries to files. list<read_lib>
+           read_libraries - the names of the workspace read library objects
+           to convert. tern gzip - if true, gzip any unzipped files. If
+           false, gunzip any zipped files. If null or missing, leave files as
+           is unless unzipping is required for interleaving or
+           deinterleaving, in which case the files will be left unzipped.
+           tern interleaved - if true, provide the files in interleaved
+           format if they are not already. If false, provide forward and
+           reverse reads files. If null or missing, leave files as is.) ->
+           structure: parameter "read_libraries" of list of type "read_lib"
+           (A reference to a read library stored in the workspace service,
+           whether of the KBaseAssembly or KBaseFile type. Usage of absolute
+           references (e.g. 256/3/6) is strongly encouraged to avoid race
+           conditions, although any valid reference is allowed.), parameter
+           "gzip" of type "tern" (A ternary. Allowed values are 'false',
+           'true', or null. Any other value is invalid.), parameter
+           "interleaved" of type "tern" (A ternary. Allowed values are
+           'false', 'true', or null. Any other value is invalid.)
         :returns: instance of type "ConvertReadLibraryOutput" (The output of
            the convert method. mapping<read_lib, ConvertedReadLibrary> files
-           - a mapping of the read library workspace object names to
+           - a mapping of the read library workspace references to
            information about the converted data for each library.) ->
-           structure: parameter "files" of mapping from type "read_lib" (The
-           workspace object name of a read library, whether of the
-           KBaseAssembly or KBaseFile type.) to type "ConvertedReadLibrary"
-           (Information about each set of reads. ReadsFiles files - the reads
-           files. string ref - the workspace reference of the reads file, e.g
+           structure: parameter "files" of mapping from type "read_lib" (A
+           reference to a read library stored in the workspace service,
+           whether of the KBaseAssembly or KBaseFile type. Usage of absolute
+           references (e.g. 256/3/6) is strongly encouraged to avoid race
+           conditions, although any valid reference is allowed.) to type
+           "ConvertedReadLibrary" (Information about each set of reads.
+           ReadsFiles files - the reads files. string ref - the absolute
+           workspace reference of the reads file, e.g
            workspace_id/object_id/version. tern single_genome - whether the
            reads are from a single genome or a metagenome. null if unknown.
            tern read_orientation_outward - whether the read orientation is

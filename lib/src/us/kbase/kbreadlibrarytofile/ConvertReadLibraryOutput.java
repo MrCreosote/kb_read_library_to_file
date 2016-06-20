@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * <pre>
  * The output of the convert method.
  * mapping<read_lib, ConvertedReadLibrary> files - a mapping
- *     of the read library workspace object names to information
+ *     of the read library workspace references to information
  *     about the converted data for each library.
  * </pre>
  * 
