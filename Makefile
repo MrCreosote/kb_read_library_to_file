@@ -24,7 +24,8 @@ compile:
 		--javasrc src \
 		--java \
 		--pysrvname $(SERVICE_CAPS).$(SERVICE_CAPS)Server \
-		--pyimplname $(SERVICE_CAPS).$(SERVICE_CAPS)Impl;
+		--pyimplname $(SERVICE_CAPS).$(SERVICE_CAPS)Impl \
+		--clasyncver release;
 
 build:
 	chmod +x $(SCRIPTS_DIR)/entrypoint.sh

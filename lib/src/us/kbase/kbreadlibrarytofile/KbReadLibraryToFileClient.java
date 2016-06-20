@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import us.kbase.auth.AuthToken;
+import us.kbase.common.service.JobState;
 import us.kbase.common.service.JsonClientCaller;
 import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.RpcContext;
@@ -38,6 +39,8 @@ import us.kbase.common.service.UnauthorizedException;
  */
 public class KbReadLibraryToFileClient {
     private JsonClientCaller caller;
+    private long asyncJobCheckTimeMs = 5000;
+    private String asyncVersion = "release";
 
 
     /** Constructs a client with a custom URL and no user credentials.
@@ -156,6 +159,52 @@ public class KbReadLibraryToFileClient {
         caller.setFileForNextRpcResponse(f);
     }
 
+    public long getAsyncJobCheckTimeMs() {
+        return this.asyncJobCheckTimeMs;
+    }
+
+    public void setAsyncJobCheckTimeMs(long newValue) {
+        this.asyncJobCheckTimeMs = newValue;
+    }
+
+    public String getAsyncVersion() {
+        return this.asyncVersion;
+    }
+
+    public void setAsyncVersion(String newValue) {
+        this.asyncVersion = newValue;
+    }
+
+    protected <T> JobState<T> _checkJob(String jobId, TypeReference<List<JobState<T>>> retType) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(jobId);
+        List<JobState<T>> res = caller.jsonrpcCall("kb_read_library_to_file._check_job", args, retType, true, true);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: convert_read_library_to_file</p>
+     * <pre>
+     * Convert read libraries to files
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.kbreadlibrarytofile.ConvertReadLibraryParams ConvertReadLibraryParams}
+     * @return   parameter "output" of type {@link us.kbase.kbreadlibrarytofile.ConvertReadLibraryOutput ConvertReadLibraryOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    protected String _convertReadLibraryToFileSubmit(ConvertReadLibraryParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        if (asyncVersion != null) {
+            if (jsonRpcContext == null || jsonRpcContext.length == 0 || jsonRpcContext[0] == null)
+                jsonRpcContext = new RpcContext[] {new RpcContext()};
+            jsonRpcContext[0].getAdditionalProperties().put("service_ver", asyncVersion);
+        }
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<String>> retType = new TypeReference<List<String>>() {};
+        List<String> res = caller.jsonrpcCall("kb_read_library_to_file._convert_read_library_to_file_submit", args, retType, true, true, jsonRpcContext);
+        return res.get(0);
+    }
+
     /**
      * <p>Original spec-file function name: convert_read_library_to_file</p>
      * <pre>
@@ -167,10 +216,19 @@ public class KbReadLibraryToFileClient {
      * @throws JsonClientException if a JSON RPC exception occurs
      */
     public ConvertReadLibraryOutput convertReadLibraryToFile(ConvertReadLibraryParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
-        List<Object> args = new ArrayList<Object>();
-        args.add(params);
-        TypeReference<List<ConvertReadLibraryOutput>> retType = new TypeReference<List<ConvertReadLibraryOutput>>() {};
-        List<ConvertReadLibraryOutput> res = caller.jsonrpcCall("kb_read_library_to_file.convert_read_library_to_file", args, retType, true, true, jsonRpcContext);
-        return res.get(0);
+        String jobId = _convertReadLibraryToFileSubmit(params, jsonRpcContext);
+        TypeReference<List<JobState<List<ConvertReadLibraryOutput>>>> retType = new TypeReference<List<JobState<List<ConvertReadLibraryOutput>>>>() {};
+        while (true) {
+            if (Thread.currentThread().isInterrupted())
+                throw new JsonClientException("Thread was interrupted");
+            try { 
+                Thread.sleep(this.asyncJobCheckTimeMs);
+            } catch(Exception ex) {
+                throw new JsonClientException("Thread was interrupted", ex);
+            }
+            JobState<List<ConvertReadLibraryOutput>> res = _checkJob(jobId, retType);
+            if (res.getFinished() != 0L)
+                return res.getResult().get(0);
+        }
     }
 }

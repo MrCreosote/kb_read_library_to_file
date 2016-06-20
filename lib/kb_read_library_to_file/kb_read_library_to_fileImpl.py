@@ -61,7 +61,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "ecc2a120b0b98976724fe550918132c2c2d5cd85"
+    GIT_COMMIT_HASH = "6709a2cf4a19a5b72b533e6cd57489256ca90dc6"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block

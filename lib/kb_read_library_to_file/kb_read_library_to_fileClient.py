@@ -14,6 +14,7 @@ try:
 except:
     # no they aren't
     from baseclient import BaseClient as _BaseClient  # @Reimport
+import time
 
 
 class kb_read_library_to_file(object):
@@ -22,15 +23,26 @@ class kb_read_library_to_file(object):
             self, url=None, timeout=30 * 60, user_id=None,
             password=None, token=None, ignore_authrc=False,
             trust_all_ssl_certificates=False,
-            auth_svc='https://kbase.us/services/authorization/Sessions/Login'):
+            auth_svc='https://kbase.us/services/authorization/Sessions/Login',
+            service_ver='release',
+            async_job_check_time_ms=5000):
         if url is None:
             raise ValueError('A url is required')
-        self._service_ver = None
+        self._service_ver = service_ver
         self._client = _BaseClient(
             url, timeout=timeout, user_id=user_id, password=password,
             token=token, ignore_authrc=ignore_authrc,
             trust_all_ssl_certificates=trust_all_ssl_certificates,
-            auth_svc=auth_svc)
+            auth_svc=auth_svc,
+            async_job_check_time_ms=async_job_check_time_ms)
+
+    def _check_job(self, job_id):
+        return self._client._check_job('kb_read_library_to_file', job_id)
+
+    def _convert_read_library_to_file_submit(self, params, context=None):
+        return self._client._submit_job(
+             'kb_read_library_to_file.convert_read_library_to_file', [params],
+             self._service_ver, context)
 
     def convert_read_library_to_file(self, params, context=None):
         """
@@ -154,6 +166,9 @@ class kb_read_library_to_file(object):
            "insert_size_std_dev" of Double, parameter "read_count" of Long,
            parameter "read_size" of Long, parameter "gc_content" of Double
         """
-        return self._client.call_method(
-            'kb_read_library_to_file.convert_read_library_to_file',
-            [params], self._service_ver, context)
+        job_id = self._convert_read_library_to_file_submit(params, context)
+        while True:
+            time.sleep(self._client.async_job_check_time)
+            job_state = self._check_job(job_id)
+            if job_state['finished']:
+                return job_state['result'][0]

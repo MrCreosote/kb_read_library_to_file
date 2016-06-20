@@ -6,6 +6,7 @@ use strict;
 use Data::Dumper;
 use URI;
 use Bio::KBase::Exceptions;
+use Time::HiRes;
 my $get_time = sub { time, 0 };
 eval {
     require Time::HiRes;
@@ -61,6 +62,17 @@ sub new
 	url => $url,
 	headers => [],
     };
+    my %arg_hash = @args;
+    my $async_job_check_time = 5.0;
+    if (exists $arg_hash{"async_job_check_time_ms"}) {
+        $async_job_check_time = $arg_hash{"async_job_check_time_ms"} / 1000.0;
+    }
+    $self->{async_job_check_time} = $async_job_check_time;
+    my release = 'release';
+    if (exists $arg_hash{"async_version"}) {
+        release = $arg_hash{"async_version"};
+    }
+    $self->{async_version} = release;
 
     chomp($self->{hostname} = `hostname`);
     $self->{hostname} ||= 'unknown-host';
@@ -124,6 +136,43 @@ sub new
     bless $self, $class;
     #    $self->_validate_version();
     return $self;
+}
+
+sub _check_job {
+    my($self, @args) = @_;
+# Authentication: ${method.authentication}
+    if ((my $n = @args) != 1) {
+        Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+                                   "Invalid argument count for function _check_job (received $n, expecting 1)");
+    }
+    {
+        my($job_id) = @args;
+        my @_bad_arguments;
+        (!ref($job_id)) or push(@_bad_arguments, "Invalid type for argument 0 \"job_id\" (it should be a string)");
+        if (@_bad_arguments) {
+            my $msg = "Invalid arguments passed to _check_job:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+            Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+                                   method_name => '_check_job');
+        }
+    }
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+        method => "kb_read_library_to_file._check_job",
+        params => \@args});
+    if ($result) {
+        if ($result->is_error) {
+            Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+                           code => $result->content->{error}->{code},
+                           method_name => '_check_job',
+                           data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+                          );
+        } else {
+            return $result->result->[0];
+        }
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method _check_job",
+                        status_line => $self->{client}->status_line,
+                        method_name => '_check_job');
+    }
 }
 
 
@@ -267,50 +316,63 @@ Convert read libraries to files
 
 =cut
 
- sub convert_read_library_to_file
+sub convert_read_library_to_file
 {
     my($self, @args) = @_;
-
-# Authentication: required
-
-    if ((my $n = @args) != 1)
-    {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function convert_read_library_to_file (received $n, expecting 1)");
-    }
-    {
-	my($params) = @args;
-
-	my @_bad_arguments;
-        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
-        if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to convert_read_library_to_file:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'convert_read_library_to_file');
-	}
-    }
-
-    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
-	method => "kb_read_library_to_file.convert_read_library_to_file",
-	params => \@args,
-    });
-    if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'convert_read_library_to_file',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
-	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
-	}
-    } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method convert_read_library_to_file",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'convert_read_library_to_file',
-				       );
+    my $job_id = $self->_convert_read_library_to_file_submit(@args);
+    while (1) {
+        Time::HiRes::sleep($self->{async_job_check_time});
+        my $job_state_ref = $self->_check_job($job_id);
+        if ($job_state_ref->{"finished"} != 0) {
+            if (!exists $job_state_ref->{"result"}) {
+                $job_state_ref->{"result"} = [];
+            }
+            return wantarray ? @{$job_state_ref->{"result"}} : $job_state_ref->{"result"}->[0];
+        }
     }
 }
+
+sub _convert_read_library_to_file_submit {
+    my($self, @args) = @_;
+# Authentication: required
+    if ((my $n = @args) != 1) {
+        Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+                                   "Invalid argument count for function convert_read_library_to_file_async (received $n, expecting 1)");
+    }
+    {
+        my($params) = @args;
+        my @_bad_arguments;
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
+        if (@_bad_arguments) {
+            my $msg = "Invalid arguments passed to _convert_read_library_to_file_submit:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+            Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+                                   method_name => '_convert_read_library_to_file_submit');
+        }
+    }
+    my $context = undef;
+    if ($self->{async_version}) {
+        $context = {'service_ver' => $self->{async_version}};
+    }
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+        method => "kb_read_library_to_file._convert_read_library_to_file_submit",
+        params => \@args}, context => $context);
+    if ($result) {
+        if ($result->is_error) {
+            Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+                           code => $result->content->{error}->{code},
+                           method_name => '_convert_read_library_to_file_submit',
+                           data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+            );
+        } else {
+            return $result->result->[0];  # job_id
+        }
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method convert_read_library_to_file_async",
+                        status_line => $self->{client}->status_line,
+                        method_name => '_convert_read_library_to_file_submit');
+    }
+}
+
  
   
 
