@@ -5,176 +5,152 @@
 #
 ############################################################
 
+from __future__ import print_function
+# the following is a hack to get the baseclient to import whether we're in a
+# package or not. This makes pep8 unhappy hence the annotations.
 try:
-    import json as _json
-except ImportError:
-    import sys
-    sys.path.append('simplejson-2.3.3')
-    import simplejson as _json
-
-import requests as _requests
-import urlparse as _urlparse
-import random as _random
-import base64 as _base64
-from ConfigParser import ConfigParser as _ConfigParser
-import os as _os
-
-_CT = 'content-type'
-_AJ = 'application/json'
-_URL_SCHEME = frozenset(['http', 'https'])
-
-
-def _get_token(user_id, password,
-               auth_svc='https://nexus.api.globusonline.org/goauth/token?' +
-                        'grant_type=client_credentials'):
-    # This is bandaid helper function until we get a full
-    # KBase python auth client released
-    auth = _base64.b64encode(user_id + ':' + password)
-    headers = {'Authorization': 'Basic ' + auth}
-    ret = _requests.get(auth_svc, headers=headers, allow_redirects=True)
-    status = ret.status_code
-    if status >= 200 and status <= 299:
-        tok = _json.loads(ret.text)
-    elif status == 403:
-        raise Exception('Authentication failed: Bad user_id/password ' +
-                        'combination for user %s' % (user_id))
-    else:
-        raise Exception(ret.text)
-    return tok['access_token']
-
-
-def _read_rcfile(file=_os.environ['HOME'] + '/.authrc'):  # @ReservedAssignment
-    # Another bandaid to read in the ~/.authrc file if one is present
-    authdata = None
-    if _os.path.exists(file):
-        try:
-            with open(file) as authrc:
-                rawdata = _json.load(authrc)
-                # strip down whatever we read to only what is legit
-                authdata = {x: rawdata.get(x) for x in (
-                    'user_id', 'token', 'client_secret', 'keyfile',
-                    'keyfile_passphrase', 'password')}
-        except Exception, e:
-            print "Error while reading authrc file %s: %s" % (file, e)
-    return authdata
-
-
-def _read_inifile(file=_os.environ.get(  # @ReservedAssignment
-                  'KB_DEPLOYMENT_CONFIG', _os.environ['HOME'] +
-                  '/.kbase_config')):
-    # Another bandaid to read in the ~/.kbase_config file if one is present
-    authdata = None
-    if _os.path.exists(file):
-        try:
-            config = _ConfigParser()
-            config.read(file)
-            # strip down whatever we read to only what is legit
-            authdata = {x: config.get('authentication', x)
-                        if config.has_option('authentication', x)
-                        else None for x in ('user_id', 'token',
-                                            'client_secret', 'keyfile',
-                                            'keyfile_passphrase', 'password')}
-        except Exception, e:
-            print "Error while reading INI file %s: %s" % (file, e)
-    return authdata
-
-
-class ServerError(Exception):
-
-    def __init__(self, name, code, message, data=None, error=None):
-        self.name = name
-        self.code = code
-        self.message = '' if message is None else message
-        self.data = data or error or ''
-        # data = JSON RPC 2.0, error = 1.1
-
-    def __str__(self):
-        return self.name + ': ' + str(self.code) + '. ' + self.message + \
-            '\n' + self.data
-
-
-class _JSONObjectEncoder(_json.JSONEncoder):
-
-    def default(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        if isinstance(obj, frozenset):
-            return list(obj)
-        return _json.JSONEncoder.default(self, obj)
+    # baseclient and this client are in a package
+    from .baseclient import BaseClient as _BaseClient  # @UnusedImport
+except:
+    # no they aren't
+    from baseclient import BaseClient as _BaseClient  # @Reimport
 
 
 class kb_read_library_to_file(object):
 
-    def __init__(self, url=None, timeout=30 * 60, user_id=None,
-                 password=None, token=None, ignore_authrc=False,
-                 trust_all_ssl_certificates=False):
+    def __init__(
+            self, url=None, timeout=30 * 60, user_id=None,
+            password=None, token=None, ignore_authrc=False,
+            trust_all_ssl_certificates=False,
+            auth_svc='https://kbase.us/services/authorization/Sessions/Login'):
         if url is None:
             raise ValueError('A url is required')
-        scheme, _, _, _, _, _ = _urlparse.urlparse(url)
-        if scheme not in _URL_SCHEME:
-            raise ValueError(url + " isn't a valid http url")
-        self.url = url
-        self.timeout = int(timeout)
-        self._headers = dict()
-        self.trust_all_ssl_certificates = trust_all_ssl_certificates
-        # token overrides user_id and password
-        if token is not None:
-            self._headers['AUTHORIZATION'] = token
-        elif user_id is not None and password is not None:
-            self._headers['AUTHORIZATION'] = _get_token(user_id, password)
-        elif 'KB_AUTH_TOKEN' in _os.environ:
-            self._headers['AUTHORIZATION'] = _os.environ.get('KB_AUTH_TOKEN')
-        elif not ignore_authrc:
-            authdata = _read_inifile()
-            if authdata is None:
-                authdata = _read_rcfile()
-            if authdata is not None:
-                if authdata.get('token') is not None:
-                    self._headers['AUTHORIZATION'] = authdata['token']
-                elif(authdata.get('user_id') is not None
-                     and authdata.get('password') is not None):
-                    self._headers['AUTHORIZATION'] = _get_token(
-                        authdata['user_id'], authdata['password'])
-        if self.timeout < 1:
-            raise ValueError('Timeout value must be at least 1 second')
+        self._service_ver = None
+        self._client = _BaseClient(
+            url, timeout=timeout, user_id=user_id, password=password,
+            token=token, ignore_authrc=ignore_authrc,
+            trust_all_ssl_certificates=trust_all_ssl_certificates,
+            auth_svc=auth_svc)
 
-    def _call(self, method, params, json_rpc_context = None):
-        arg_hash = {'method': method,
-                    'params': params,
-                    'version': '1.1',
-                    'id': str(_random.random())[2:]
-                    }
-        if json_rpc_context:
-            arg_hash['context'] = json_rpc_context
-
-        body = _json.dumps(arg_hash, cls=_JSONObjectEncoder)
-        ret = _requests.post(self.url, data=body, headers=self._headers,
-                             timeout=self.timeout,
-                             verify=not self.trust_all_ssl_certificates)
-        if ret.status_code == _requests.codes.server_error:
-            json_header = None
-            if _CT in ret.headers:
-                json_header = ret.headers[_CT]
-            if _CT in ret.headers and ret.headers[_CT] == _AJ:
-                err = _json.loads(ret.text)
-                if 'error' in err:
-                    raise ServerError(**err['error'])
-                else:
-                    raise ServerError('Unknown', 0, ret.text)
-            else:
-                raise ServerError('Unknown', 0, ret.text)
-        if ret.status_code != _requests.codes.OK:
-            ret.raise_for_status()
-        ret.encoding = 'utf-8'
-        resp = _json.loads(ret.text)
-        if 'result' not in resp:
-            raise ServerError('Unknown', 0, 'An unknown server error occurred')
-        return resp['result']
- 
-    def convert_read_library_to_file(self, params, json_rpc_context = None):
-        if json_rpc_context and type(json_rpc_context) is not dict:
-            raise ValueError('Method convert_read_library_to_file: argument json_rpc_context is not type dict as required.')
-        resp = self._call('kb_read_library_to_file.convert_read_library_to_file',
-                          [params], json_rpc_context)
-        return resp[0]
- 
+    def convert_read_library_to_file(self, params, context=None):
+        """
+        Convert read libraries to files
+        :param params: instance of type "ConvertReadLibraryParams" (Input
+           parameters for converting libraries to files. string
+           workspace_name - the name of the workspace from which to take
+           input. list<read_lib> read_libraries - the names of the workspace
+           read library objects to convert. tern gzip - if true, gzip any
+           unzipped files. If false, gunzip any zipped files. If null or
+           missing, leave files as is unless unzipping is required for
+           interleaving or deinterleaving, in which case the files will be
+           left unzipped. tern interleaved - if true, provide the files in
+           interleaved format if they are not already. If false, provide
+           forward and reverse reads files. If null or missing, leave files
+           as is.) -> structure: parameter "workspace_name" of String,
+           parameter "read_libraries" of list of type "read_lib" (The
+           workspace object name of a read library, whether of the
+           KBaseAssembly or KBaseFile type.), parameter "gzip" of type "tern"
+           (A ternary. Allowed values are 'false', 'true', or null. Any other
+           value is invalid.), parameter "interleaved" of type "tern" (A
+           ternary. Allowed values are 'false', 'true', or null. Any other
+           value is invalid.)
+        :returns: instance of type "ConvertReadLibraryOutput" (The output of
+           the convert method. mapping<read_lib, ConvertedReadLibrary> files
+           - a mapping of the read library workspace object names to
+           information about the converted data for each library.) ->
+           structure: parameter "files" of mapping from type "read_lib" (The
+           workspace object name of a read library, whether of the
+           KBaseAssembly or KBaseFile type.) to type "ConvertedReadLibrary"
+           (Information about each set of reads. ReadsFiles files - the reads
+           files. string ref - the workspace reference of the reads file, e.g
+           workspace_id/object_id/version. tern single_genome - whether the
+           reads are from a single genome or a metagenome. null if unknown.
+           tern read_orientation_outward - whether the read orientation is
+           outward from the set of primers. null if unknown or single ended
+           reads. string sequencing_tech - the sequencing technology used to
+           produce the reads. null if unknown. KBaseCommon.StrainInfo strain
+           - information about the organism strain that was sequenced. null
+           if unavailable. KBaseCommon.SourceInfo source - information about
+           the organism source. null if unavailable. float insert_size_mean -
+           the mean size of the genetic fragments. null if unavailable or
+           single end reads. float insert_size_std_dev - the standard
+           deviation of the size of the genetic fragments. null if
+           unavailable or single end reads. int read_count - the number of
+           reads in the this dataset. null if unavailable. int read_size -
+           the total size of the reads, in bases. null if unavailable. float
+           gc_content - the GC content of the reads. null if unavailable.) ->
+           structure: parameter "files" of type "ReadsFiles" (Reads file
+           locations and gzip status. Only the relevant fields will be
+           present in the structure. string fwd - the path to the forward /
+           left reads. string rev - the path to the reverse / right reads.
+           string inter - the path to the interleaved reads. string sing -
+           the path to the single end reads. bool fwd_gz - whether the
+           forward / left reads are gzipped. bool rev_gz - whether the
+           reverse / right reads are gzipped. bool inter_gz - whether the
+           interleaved reads are gzipped. bool sing_gz - whether the single
+           reads are gzipped.) -> structure: parameter "fwd" of String,
+           parameter "rev" of String, parameter "inter" of String, parameter
+           "sing" of String, parameter "fwd_gz" of type "bool" (A boolean.
+           Allowed values are 'false' or 'true'. Any other value is
+           invalid.), parameter "rev_gz" of type "bool" (A boolean. Allowed
+           values are 'false' or 'true'. Any other value is invalid.),
+           parameter "inter_gz" of type "bool" (A boolean. Allowed values are
+           'false' or 'true'. Any other value is invalid.), parameter
+           "sing_gz" of type "bool" (A boolean. Allowed values are 'false' or
+           'true'. Any other value is invalid.), parameter "ref" of String,
+           parameter "single_genome" of type "tern" (A ternary. Allowed
+           values are 'false', 'true', or null. Any other value is invalid.),
+           parameter "read_orientation_outward" of type "tern" (A ternary.
+           Allowed values are 'false', 'true', or null. Any other value is
+           invalid.), parameter "sequencing_tech" of String, parameter
+           "strain" of type "StrainInfo" (Information about a strain.
+           genetic_code - the genetic code of the strain. See
+           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
+           genus - the genus of the strain species - the species of the
+           strain strain - the identifier for the strain source - information
+           about the source of the strain organelle - the organelle of
+           interest for the related data (e.g. mitochondria) ncbi_taxid - the
+           NCBI taxonomy ID of the strain location - the location from which
+           the strain was collected @optional genetic_code source ncbi_taxid
+           organelle location) -> structure: parameter "genetic_code" of
+           Long, parameter "genus" of String, parameter "species" of String,
+           parameter "strain" of String, parameter "organelle" of String,
+           parameter "source" of type "SourceInfo" (Information about the
+           source of a piece of data. source - the name of the source (e.g.
+           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "ncbi_taxid" of Long, parameter "location" of
+           type "Location" (Information about a location. lat - latitude of
+           the site, recorded as a decimal number. North latitudes are
+           positive values and south latitudes are negative numbers. lon -
+           longitude of the site, recorded as a decimal number. West
+           longitudes are positive values and east longitudes are negative
+           numbers. elevation - elevation of the site, expressed in meters
+           above sea level. Negative values are allowed. date - date of an
+           event at this location (for example, sample collection), expressed
+           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
+           description of the location and, if applicable, the associated
+           event. @optional date description) -> structure: parameter "lat"
+           of Double, parameter "lon" of Double, parameter "elevation" of
+           Double, parameter "date" of String, parameter "description" of
+           String, parameter "source" of type "SourceInfo" (Information about
+           the source of a piece of data. source - the name of the source
+           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "insert_size_mean" of Double, parameter
+           "insert_size_std_dev" of Double, parameter "read_count" of Long,
+           parameter "read_size" of Long, parameter "gc_content" of Double
+        """
+        return self._client.call_method(
+            'kb_read_library_to_file.convert_read_library_to_file',
+            [params], self._service_ver, context)
