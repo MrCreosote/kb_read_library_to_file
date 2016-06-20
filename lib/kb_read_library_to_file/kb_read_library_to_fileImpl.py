@@ -82,8 +82,6 @@ Operational notes:
 
     TRUE = 'true'
     FALSE = 'false'
-    INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
-    INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
     URL_WS = 'workspace-url'
     URL_SHOCK = 'shock-url'
@@ -488,12 +486,6 @@ Operational notes:
                              .format(boolname, params[boolname]))
 
     def process_params(self, params):
-        if (self.PARAM_IN_WS not in params or not params[self.PARAM_IN_WS]):
-            raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-        if self.INVALID_WS_NAME_RE.search(params[self.PARAM_IN_WS]):
-            raise ValueError('Invalid workspace name ' +
-                             params[self.PARAM_IN_WS])
-
         if self.PARAM_IN_LIB not in params:
             raise ValueError(self.PARAM_IN_LIB + ' parameter is required')
         reads = params[self.PARAM_IN_LIB]
@@ -503,7 +495,7 @@ Operational notes:
             raise ValueError('At least one reads library must be provided')
         reads = list(set(reads))
         for read_name in reads:
-            if not read_name or self.INVALID_WS_OBJ_NAME_RE.search(read_name):
+            if not read_name:
                 raise ValueError('Invalid workspace object name ' + read_name)
         params[self.PARAM_IN_LIB] = reads
 
@@ -662,13 +654,7 @@ Operational notes:
         #BEGIN convert_read_library_to_file
         ''' potential improvements:
             Add continue_on_failure mode that reports errors for each failed
-                conversion rather than failing completely. This would need
-                a similar boolean to ignore failures in the workspace
-                get_objects method, or it'd require getting the reads objects
-                one by one. Yuck.
-                Alternatively - call get_object_info_new and then only process
-                the reads files that return. Race conditions possible though.
-                Probably better to add flag to get_objects.
+                conversion rather than failing completely.
             Parallelize - probably not worth it, this is all IO bound. Try if
                 there's nothing better to do. If so, each process/thread needs
                 its own shock_tmp folder.
@@ -688,8 +674,7 @@ Operational notes:
         ws = workspaceService(self.workspaceURL, token=token)
         ws_reads_ids = []
         for read_name in params[self.PARAM_IN_LIB]:
-            ws_reads_ids.append({'ref': params[self.PARAM_IN_WS] + '/' +
-                                 read_name})
+            ws_reads_ids.append({'ref': read_name})
         try:
             reads = ws.get_objects(ws_reads_ids)
         except WorkspaceException as e:

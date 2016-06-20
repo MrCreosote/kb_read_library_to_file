@@ -1761,30 +1761,31 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
     def test_no_workspace_param(self):
 
-        self.run_error(
-            ['foo'], 'workspace_name parameter is required', wsname=None)
-
-    def test_no_workspace_name(self):
-
-        self.run_error(
-            ['foo'], 'workspace_name parameter is required', wsname='None')
+        self.run_error(['foo'], 'Error on ObjectIdentity #1: Illegal number ' +
+                       'of separators / in object reference foo',
+                       exception=WorkspaceError)
 
     def test_bad_workspace_name(self):
 
-        self.run_error(['foo'], 'Invalid workspace name bad|name',
-                       wsname='bad|name')
+        self.run_error(
+            ['bad*name/foo'],
+            'Error on ObjectIdentity #1: Illegal character in workspace ' +
+            'name bad*name: *', exception=WorkspaceError)
 
     def test_non_extant_workspace(self):
 
         self.run_error(
-            ['foo'], 'Object foo cannot be accessed: No workspace with name ' +
+            ['Ireallyhopethisworkspacedoesntexistorthistestwillfail/foo'],
+            'Object foo cannot be accessed: No workspace with name ' +
             'Ireallyhopethisworkspacedoesntexistorthistestwillfail exists',
-            wsname='Ireallyhopethisworkspacedoesntexistorthistestwillfail',
             exception=WorkspaceError)
 
     def test_bad_lib_name(self):
 
-        self.run_error(['bad&name'], 'Invalid workspace object name bad&name')
+        self.run_error(
+            [self.getWsName() + '/bad&name'],
+            'Error on ObjectIdentity #1: Illegal character in object name ' +
+            'bad&name: &', exception=WorkspaceError)
 
     def test_no_libs_param(self):
 
@@ -1797,7 +1798,8 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_non_extant_lib(self):
 
         self.run_error(
-            ['foo'], 'No object with name foo exists in workspace ' +
+            [self.getWsName() + '/foo'],
+            'No object with name foo exists in workspace ' +
             str(self.wsinfo[0]), exception=WorkspaceError)
 
     def test_no_libs(self):
@@ -1806,7 +1808,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
     def test_bad_module(self):
 
-        self.run_error(['empty'],
+        self.run_error([self.getWsName() + '/empty'],
                        ('Invalid type for object {} (empty). Supported ' +
                         'types: KBaseFile.SingleEndLibrary ' +
                         'KBaseFile.PairedEndLibrary ' +
@@ -1816,7 +1818,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
     def test_bad_type(self):
 
-        self.run_error(['fileref'],
+        self.run_error([self.getWsName() + '/fileref'],
                        ('Invalid type for object {} (fileref). Supported ' +
                         'types: KBaseFile.SingleEndLibrary ' +
                         'KBaseFile.PairedEndLibrary ' +
@@ -1827,7 +1829,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_bad_shock_filename(self):
 
         self.run_error(
-            ['bad_shk_name'],
+            [self.getWsName() + '/bad_shk_name'],
             ('Error downloading reads for object {} (bad_shk_name) from ' +
              'Shock node {}: A valid file extension could not be determined ' +
              'for the reads file. In order of precedence:\n' +
@@ -1841,7 +1843,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_bad_handle_filename(self):
 
         self.run_error(
-            ['bad_file_name'],
+            [self.getWsName() + '/bad_file_name'],
             ('Error downloading reads for object {} (bad_file_name) from ' +
              'Shock node {}: A valid file extension could not be determined ' +
              'for the reads file. In order of precedence:\n' +
@@ -1855,7 +1857,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
     def test_bad_file_type(self):
 
         self.run_error(
-            ['bad_file_type'],
+            [self.getWsName() + '/bad_file_type'],
             ('Error downloading reads for object {} (bad_file_type) from ' +
              'Shock node {}: A valid file extension could not be determined ' +
              'for the reads file. In order of precedence:\n' +
@@ -1868,7 +1870,7 @@ class kb_read_library_to_fileTest(unittest.TestCase):
 
     def test_bad_shock_node(self):
 
-        self.run_error(['bad_node'],
+        self.run_error([self.getWsName() + '/bad_node'],
                        ('Error downloading reads for object {} (bad_node) ' +
                         'from Shock node {}: Node not found').format(
                             self.staged['bad_node']['ref'],
@@ -1888,22 +1890,14 @@ class kb_read_library_to_fileTest(unittest.TestCase):
             'wubba. Allowed values are "true", "false", and null.',
             interleave='wubba')
 
-    def run_error(self, readnames, error, wsname=('fake'), gzip=None,
+    def run_error(self, readnames, error, gzip=None,
                   interleave=None, exception=ValueError):
 
         test_name = inspect.stack()[1][3]
         print('\n****** starting expected fail test: ' + test_name + ' ******')
 
-        if wsname == ('fake'):
-            wsname = self.getWsName()
-
         params = {'gzip': gzip,
                   'interleaved': interleave}
-        if (wsname is not None):
-            if wsname == 'None':
-                params['workspace_name'] = None
-            else:
-                params['workspace_name'] = wsname
 
         if (readnames is not None):
             params['read_libraries'] = readnames
@@ -1921,8 +1915,8 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         test_name = inspect.stack()[1][3]
         print('\n**** starting expected success test: ' + test_name + ' ***\n')
 
-        params = {'workspace_name': self.getWsName(),
-                  'read_libraries': [f for f in testspecs]
+        params = {'read_libraries':
+                  [(self.getWsName() + '/' + f) for f in testspecs]
                   }
         if gzip != 'none':
             params['gzip'] = gzip
@@ -1938,12 +1932,13 @@ class kb_read_library_to_fileTest(unittest.TestCase):
         retmap = ret['files']
         self.assertEqual(len(retmap), len(testspecs))
         for f in testspecs:
+            wsref = self.getWsName() + '/' + f
             print('== checking testspec ' + f)
             for dirc in testspecs[f]['md5']:
                 print('\t== checking read set ' + dirc)
                 gz = testspecs[f]['gzp'][dirc]
                 expectedmd5 = testspecs[f]['md5'][dirc]
-                file_ = retmap[f]['files'][dirc]
+                file_ = retmap[wsref]['files'][dirc]
                 if gz:
                     if not file_.endswith('.' + dirc + '.fastq.gz'):
                         raise TestError(
@@ -1957,5 +1952,5 @@ class kb_read_library_to_fileTest(unittest.TestCase):
                     raise TestError('Expected file {} to end with .{}.fastq'
                                     .format(file_, dirc))
                 self.assertEqual(expectedmd5, self.md5(file_))
-                del retmap[f]['files'][dirc]
-            self.assertDictEqual(testspecs[f]['obj'], retmap[f])
+                del retmap[wsref]['files'][dirc]
+            self.assertDictEqual(testspecs[f]['obj'], retmap[wsref])
