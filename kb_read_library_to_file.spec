@@ -35,14 +35,14 @@ module kb_read_library_to_file {
      */
      typedef string tern;
     
-    /* The workspace object name of a read library, whether of the
-       KBaseAssembly or KBaseFile type.
+    /* A reference to a read library stored in the workspace service, whether
+        of the KBaseAssembly or KBaseFile type. Usage of absolute references
+        (e.g. 256/3/6) is strongly encouraged to avoid race conditions,
+        although any valid reference is allowed.
     */
     typedef string read_lib;
     
     /* Input parameters for converting libraries to files.
-        string workspace_name - the name of the workspace from which to take
-           input.
         list<read_lib> read_libraries - the names of the workspace read library
             objects to convert.
         tern gzip - if true, gzip any unzipped files. If false, gunzip any
@@ -54,10 +54,9 @@ module kb_read_library_to_file {
             files. If null or missing, leave files as is.
     */
     typedef structure {
-        string workspace_name;
         list<read_lib> read_libraries;
         tern gzip;
-        tern interlaced;
+        tern interleaved;
     } ConvertReadLibraryParams;
     
     /* Reads file locations and gzip status.
@@ -84,7 +83,7 @@ module kb_read_library_to_file {
     
     /* Information about each set of reads.
         ReadsFiles files - the reads files.
-        string ref - the workspace reference of the reads file, e.g
+        string ref - the absolute workspace reference of the reads file, e.g
             workspace_id/object_id/version.
         tern single_genome - whether the reads are from a single genome or a
             metagenome. null if unknown.
@@ -124,7 +123,7 @@ module kb_read_library_to_file {
 
     /* The output of the convert method.
         mapping<read_lib, ConvertedReadLibrary> files - a mapping
-            of the read library workspace object names to information
+            of the read library workspace references to information
             about the converted data for each library.
      */
     typedef structure {

@@ -16,8 +16,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * <p>Original spec-file type: ConvertReadLibraryParams</p>
  * <pre>
  * Input parameters for converting libraries to files.
- * string workspace_name - the name of the workspace from which to take
- *    input.
  * list<read_lib> read_libraries - the names of the workspace read library
  *     objects to convert.
  * tern gzip - if true, gzip any unzipped files. If false, gunzip any
@@ -33,37 +31,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
-    "workspace_name",
     "read_libraries",
     "gzip",
-    "interlaced"
+    "interleaved"
 })
 public class ConvertReadLibraryParams {
 
-    @JsonProperty("workspace_name")
-    private java.lang.String workspaceName;
     @JsonProperty("read_libraries")
     private List<String> readLibraries;
     @JsonProperty("gzip")
     private java.lang.String gzip;
-    @JsonProperty("interlaced")
-    private java.lang.String interlaced;
+    @JsonProperty("interleaved")
+    private java.lang.String interleaved;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
-
-    @JsonProperty("workspace_name")
-    public java.lang.String getWorkspaceName() {
-        return workspaceName;
-    }
-
-    @JsonProperty("workspace_name")
-    public void setWorkspaceName(java.lang.String workspaceName) {
-        this.workspaceName = workspaceName;
-    }
-
-    public ConvertReadLibraryParams withWorkspaceName(java.lang.String workspaceName) {
-        this.workspaceName = workspaceName;
-        return this;
-    }
 
     @JsonProperty("read_libraries")
     public List<String> getReadLibraries() {
@@ -95,18 +75,18 @@ public class ConvertReadLibraryParams {
         return this;
     }
 
-    @JsonProperty("interlaced")
-    public java.lang.String getInterlaced() {
-        return interlaced;
+    @JsonProperty("interleaved")
+    public java.lang.String getInterleaved() {
+        return interleaved;
     }
 
-    @JsonProperty("interlaced")
-    public void setInterlaced(java.lang.String interlaced) {
-        this.interlaced = interlaced;
+    @JsonProperty("interleaved")
+    public void setInterleaved(java.lang.String interleaved) {
+        this.interleaved = interleaved;
     }
 
-    public ConvertReadLibraryParams withInterlaced(java.lang.String interlaced) {
-        this.interlaced = interlaced;
+    public ConvertReadLibraryParams withInterleaved(java.lang.String interleaved) {
+        this.interleaved = interleaved;
         return this;
     }
 
@@ -122,7 +102,7 @@ public class ConvertReadLibraryParams {
 
     @Override
     public java.lang.String toString() {
-        return ((((((((((("ConvertReadLibraryParams"+" [workspaceName=")+ workspaceName)+", readLibraries=")+ readLibraries)+", gzip=")+ gzip)+", interlaced=")+ interlaced)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((("ConvertReadLibraryParams"+" [readLibraries=")+ readLibraries)+", gzip=")+ gzip)+", interleaved=")+ interleaved)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

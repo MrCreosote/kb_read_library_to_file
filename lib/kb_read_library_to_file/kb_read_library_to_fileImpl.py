@@ -61,7 +61,7 @@ Operational notes:
     #########################################
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_read_library_to_file"
-    GIT_COMMIT_HASH = "99cce782ced09edd3d8eee8eb5e116c1f806713d"
+    GIT_COMMIT_HASH = "6709a2cf4a19a5b72b533e6cd57489256ca90dc6"
     
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -82,8 +82,6 @@ Operational notes:
 
     TRUE = 'true'
     FALSE = 'false'
-    INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
-    INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
     URL_WS = 'workspace-url'
     URL_SHOCK = 'shock-url'
@@ -488,12 +486,6 @@ Operational notes:
                              .format(boolname, params[boolname]))
 
     def process_params(self, params):
-        if (self.PARAM_IN_WS not in params or not params[self.PARAM_IN_WS]):
-            raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-        if self.INVALID_WS_NAME_RE.search(params[self.PARAM_IN_WS]):
-            raise ValueError('Invalid workspace name ' +
-                             params[self.PARAM_IN_WS])
-
         if self.PARAM_IN_LIB not in params:
             raise ValueError(self.PARAM_IN_LIB + ' parameter is required')
         reads = params[self.PARAM_IN_LIB]
@@ -503,7 +495,7 @@ Operational notes:
             raise ValueError('At least one reads library must be provided')
         reads = list(set(reads))
         for read_name in reads:
-            if not read_name or self.INVALID_WS_OBJ_NAME_RE.search(read_name):
+            if not read_name:
                 raise ValueError('Invalid workspace object name ' + read_name)
         params[self.PARAM_IN_LIB] = reads
 
@@ -533,20 +525,136 @@ Operational notes:
         self.mkdir_p(self.shock_temp)
         #END_CONSTRUCTOR
         pass
+    
 
     def convert_read_library_to_file(self, ctx, params):
+        """
+        Convert read libraries to files
+        :param params: instance of type "ConvertReadLibraryParams" (Input
+           parameters for converting libraries to files. list<read_lib>
+           read_libraries - the names of the workspace read library objects
+           to convert. tern gzip - if true, gzip any unzipped files. If
+           false, gunzip any zipped files. If null or missing, leave files as
+           is unless unzipping is required for interleaving or
+           deinterleaving, in which case the files will be left unzipped.
+           tern interleaved - if true, provide the files in interleaved
+           format if they are not already. If false, provide forward and
+           reverse reads files. If null or missing, leave files as is.) ->
+           structure: parameter "read_libraries" of list of type "read_lib"
+           (A reference to a read library stored in the workspace service,
+           whether of the KBaseAssembly or KBaseFile type. Usage of absolute
+           references (e.g. 256/3/6) is strongly encouraged to avoid race
+           conditions, although any valid reference is allowed.), parameter
+           "gzip" of type "tern" (A ternary. Allowed values are 'false',
+           'true', or null. Any other value is invalid.), parameter
+           "interleaved" of type "tern" (A ternary. Allowed values are
+           'false', 'true', or null. Any other value is invalid.)
+        :returns: instance of type "ConvertReadLibraryOutput" (The output of
+           the convert method. mapping<read_lib, ConvertedReadLibrary> files
+           - a mapping of the read library workspace references to
+           information about the converted data for each library.) ->
+           structure: parameter "files" of mapping from type "read_lib" (A
+           reference to a read library stored in the workspace service,
+           whether of the KBaseAssembly or KBaseFile type. Usage of absolute
+           references (e.g. 256/3/6) is strongly encouraged to avoid race
+           conditions, although any valid reference is allowed.) to type
+           "ConvertedReadLibrary" (Information about each set of reads.
+           ReadsFiles files - the reads files. string ref - the absolute
+           workspace reference of the reads file, e.g
+           workspace_id/object_id/version. tern single_genome - whether the
+           reads are from a single genome or a metagenome. null if unknown.
+           tern read_orientation_outward - whether the read orientation is
+           outward from the set of primers. null if unknown or single ended
+           reads. string sequencing_tech - the sequencing technology used to
+           produce the reads. null if unknown. KBaseCommon.StrainInfo strain
+           - information about the organism strain that was sequenced. null
+           if unavailable. KBaseCommon.SourceInfo source - information about
+           the organism source. null if unavailable. float insert_size_mean -
+           the mean size of the genetic fragments. null if unavailable or
+           single end reads. float insert_size_std_dev - the standard
+           deviation of the size of the genetic fragments. null if
+           unavailable or single end reads. int read_count - the number of
+           reads in the this dataset. null if unavailable. int read_size -
+           the total size of the reads, in bases. null if unavailable. float
+           gc_content - the GC content of the reads. null if unavailable.) ->
+           structure: parameter "files" of type "ReadsFiles" (Reads file
+           locations and gzip status. Only the relevant fields will be
+           present in the structure. string fwd - the path to the forward /
+           left reads. string rev - the path to the reverse / right reads.
+           string inter - the path to the interleaved reads. string sing -
+           the path to the single end reads. bool fwd_gz - whether the
+           forward / left reads are gzipped. bool rev_gz - whether the
+           reverse / right reads are gzipped. bool inter_gz - whether the
+           interleaved reads are gzipped. bool sing_gz - whether the single
+           reads are gzipped.) -> structure: parameter "fwd" of String,
+           parameter "rev" of String, parameter "inter" of String, parameter
+           "sing" of String, parameter "fwd_gz" of type "bool" (A boolean.
+           Allowed values are 'false' or 'true'. Any other value is
+           invalid.), parameter "rev_gz" of type "bool" (A boolean. Allowed
+           values are 'false' or 'true'. Any other value is invalid.),
+           parameter "inter_gz" of type "bool" (A boolean. Allowed values are
+           'false' or 'true'. Any other value is invalid.), parameter
+           "sing_gz" of type "bool" (A boolean. Allowed values are 'false' or
+           'true'. Any other value is invalid.), parameter "ref" of String,
+           parameter "single_genome" of type "tern" (A ternary. Allowed
+           values are 'false', 'true', or null. Any other value is invalid.),
+           parameter "read_orientation_outward" of type "tern" (A ternary.
+           Allowed values are 'false', 'true', or null. Any other value is
+           invalid.), parameter "sequencing_tech" of String, parameter
+           "strain" of type "StrainInfo" (Information about a strain.
+           genetic_code - the genetic code of the strain. See
+           http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?mode=c
+           genus - the genus of the strain species - the species of the
+           strain strain - the identifier for the strain source - information
+           about the source of the strain organelle - the organelle of
+           interest for the related data (e.g. mitochondria) ncbi_taxid - the
+           NCBI taxonomy ID of the strain location - the location from which
+           the strain was collected @optional genetic_code source ncbi_taxid
+           organelle location) -> structure: parameter "genetic_code" of
+           Long, parameter "genus" of String, parameter "species" of String,
+           parameter "strain" of String, parameter "organelle" of String,
+           parameter "source" of type "SourceInfo" (Information about the
+           source of a piece of data. source - the name of the source (e.g.
+           NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "ncbi_taxid" of Long, parameter "location" of
+           type "Location" (Information about a location. lat - latitude of
+           the site, recorded as a decimal number. North latitudes are
+           positive values and south latitudes are negative numbers. lon -
+           longitude of the site, recorded as a decimal number. West
+           longitudes are positive values and east longitudes are negative
+           numbers. elevation - elevation of the site, expressed in meters
+           above sea level. Negative values are allowed. date - date of an
+           event at this location (for example, sample collection), expressed
+           in the format YYYY-MM-DDThh:mm:ss.SSSZ description - a free text
+           description of the location and, if applicable, the associated
+           event. @optional date description) -> structure: parameter "lat"
+           of Double, parameter "lon" of Double, parameter "elevation" of
+           Double, parameter "date" of String, parameter "description" of
+           String, parameter "source" of type "SourceInfo" (Information about
+           the source of a piece of data. source - the name of the source
+           (e.g. NCBI, JGI, Swiss-Prot) source_id - the ID of the data at the
+           source project_id - the ID of a project encompassing the data at
+           the source @optional source source_id project_id) -> structure:
+           parameter "source" of String, parameter "source_id" of type
+           "source_id" (An ID used for a piece of data at its source. @id
+           external), parameter "project_id" of type "project_id" (An ID used
+           for a project encompassing a piece of data at its source. @id
+           external), parameter "insert_size_mean" of Double, parameter
+           "insert_size_std_dev" of Double, parameter "read_count" of Long,
+           parameter "read_size" of Long, parameter "gc_content" of Double
+        """
         # ctx is the context object
         # return variables are: output
         #BEGIN convert_read_library_to_file
         ''' potential improvements:
             Add continue_on_failure mode that reports errors for each failed
-                conversion rather than failing completely. This would need
-                a similar boolean to ignore failures in the workspace
-                get_objects method, or it'd require getting the reads objects
-                one by one. Yuck.
-                Alternatively - call get_object_info_new and then only process
-                the reads files that return. Race conditions possible though.
-                Probably better to add flag to get_objects.
+                conversion rather than failing completely.
             Parallelize - probably not worth it, this is all IO bound. Try if
                 there's nothing better to do. If so, each process/thread needs
                 its own shock_tmp folder.
@@ -566,8 +674,7 @@ Operational notes:
         ws = workspaceService(self.workspaceURL, token=token)
         ws_reads_ids = []
         for read_name in params[self.PARAM_IN_LIB]:
-            ws_reads_ids.append({'ref': params[self.PARAM_IN_WS] + '/' +
-                                 read_name})
+            ws_reads_ids.append({'ref': read_name})
         try:
             reads = ws.get_objects(ws_reads_ids)
         except WorkspaceException as e:

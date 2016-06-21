@@ -1,0 +1,37 @@
+
+<p>Example python usage:</p>
+
+<pre>
+    def __init__(self, config):
+        #BEGIN_CONSTRUCTOR
+        self.generic_clientURL = os.environ['SDK_CALLBACK_URL']
+        ...
+
+    def my_method(self):
+
+        ...
+        gc = GenericClient(self.generic_clientURL, use_url_lookup=False,
+                           token=token)
+        reads_params = {'read_libraries': [library1, library2],
+                        'workspace_name': 'my_workspace',
+                        'gzip': 'false',
+                        'interleaved': None}
+
+        try:
+            reads = gc.sync_call(
+                'kb_read_library_to_file.convert_read_library_to_file',
+                [reads_params],
+                # change service_ver to beta or release as appropriate
+                json_rpc_context={'service_ver': 'dev'}
+                )[0]
+        except ServerError as se:
+            self.log('logging stacktrace from Generic Client error')
+            self.log(se.data)
+            raise
+        ...
+</pre>
+
+<p> The reads object will contain filepaths for the reads files and the
+available data from the workspace objects for those files as per the method
+specification.<p>
+
