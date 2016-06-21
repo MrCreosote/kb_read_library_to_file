@@ -2,30 +2,27 @@
 <p>Example python usage:</p>
 
 <pre>
+    from kb_read_library_to_file.kb_read_library_to_fileClient import kb_read_library_to_file
+    from kb_read_library_to_file.baseclient import ServerError
+
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
-        self.generic_clientURL = os.environ['SDK_CALLBACK_URL']
+        self.callbackURL = os.environ['SDK_CALLBACK_URL']
         ...
 
-    def my_method(self):
+    def my_method(self, ctx, params):
 
         ...
-        gc = GenericClient(self.generic_clientURL, use_url_lookup=False,
-                           token=token)
-        reads_params = {'read_libraries': [library1, library2],
-                        'workspace_name': 'my_workspace',
+        readcli = kb_read_library_to_file(self.callbackURL, token=ctx['token'],
+                                          service_ver='dev')
+        reads_params = {'read_libraries': ['256/24/1', '256/26/2'],
                         'gzip': 'false',
                         'interleaved': None}
 
         try:
-            reads = gc.sync_call(
-                'kb_read_library_to_file.convert_read_library_to_file',
-                [reads_params],
-                # change service_ver to beta or release as appropriate
-                json_rpc_context={'service_ver': 'dev'}
-                )[0]
+            reads = readcli.convert_read_library_to_file(reads_params)
         except ServerError as se:
-            self.log('logging stacktrace from Generic Client error')
+            self.log('logging stacktrace from reads client error')
             self.log(se.data)
             raise
         ...
